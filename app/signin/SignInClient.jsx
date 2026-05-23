@@ -33,6 +33,8 @@ function looksLikeEmail(value) {
 }
 
 function getAuthRedirectUrl() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) return `${siteUrl.replace(/\/$/, '')}/signin?confirmed=1`;
   if (typeof window === 'undefined') return undefined;
   return `${window.location.origin}/signin?confirmed=1`;
 }
@@ -143,6 +145,17 @@ export default function SignInClient() {
   const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
   const [resending,  setResending]  = useState(false);
   const [focusField, setFocusField] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('confirmed') !== '1') return;
+
+    setNotice('Email confirmed successfully. You can now sign in.');
+    try { localStorage.removeItem('assetflux_pending_confirmation'); } catch {}
+
+    const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
+    window.history.replaceState({}, '', cleanUrl);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

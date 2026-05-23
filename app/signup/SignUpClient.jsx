@@ -21,6 +21,8 @@ const NOTIF = [
 const STEPS = ['Personal Details', 'Your Interests', 'Account Security'];
 
 function getAuthRedirectUrl() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) return `${siteUrl.replace(/\/$/, '')}/signin?confirmed=1`;
   if (typeof window === 'undefined') return undefined;
   return `${window.location.origin}/signin?confirmed=1`;
 }
@@ -185,6 +187,7 @@ export default function SignUpClient() {
     localStorage.setItem('assetflux_interests', JSON.stringify(selectedCats));
     document.cookie = `assetflux_interests=${encodeURIComponent(JSON.stringify(selectedCats))}; path=/; max-age=31536000; SameSite=Lax`;
     localStorage.setItem('assetflux_user', JSON.stringify({ username: form.username, email: form.email, name: `${form.firstName} ${form.lastName}` }));
+    localStorage.setItem('assetflux_pending_confirmation', form.email);
     localStorage.setItem('isNewUser', 'true');
     
     setLoading(false);
