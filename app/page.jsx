@@ -17,8 +17,8 @@ const MARKET_ROUTE_LINKS = [
 ];
 
 const TICKER_CONFIG = [
-  { key: 'BTC/USDT',  label: 'BTC/USDT', prefix: 'â‚¿' },
-  { key: 'ETH/USDT',  label: 'ETH/USDT', prefix: 'Îž' },
+  { key: 'BTC/USDT',  label: 'BTC/USDT', prefix: 'BTC' },
+  { key: 'ETH/USDT',  label: 'ETH/USDT', prefix: 'ETH' },
   { key: 'EUR/USDT',  label: 'EUR/USD',  prefix: '' },
   { key: 'AAPL',      label: 'AAPL.US',  prefix: '$' },
   { key: 'TSLA',      label: 'TSLA.US',  prefix: '$' },
@@ -27,7 +27,7 @@ const TICKER_CONFIG = [
 ];
 
 const MARKET_CARDS = [
-  { key: 'BTC/USDT',  name: 'Bitcoin',       symbol: 'BTC/USDT',  prefix: 'â‚¿', color: '#f59e0b', badge: 'CRYPTO' },
+  { key: 'BTC/USDT',  name: 'Bitcoin',       symbol: 'BTC/USDT',  prefix: 'BTC', color: '#f59e0b', badge: 'CRYPTO' },
   { key: 'AAPL',      name: 'Apple Inc.',     symbol: 'AAPL.US',   prefix: '$', color: '#818cf8', badge: 'STOCK'  },
   { key: 'EUR/USDT',  name: 'Euro / Dollar',  symbol: 'EUR/USD',   prefix: '',  color: '#34d399', badge: 'FOREX'  },
   { key: 'TSLA',      name: 'Tesla Inc.',     symbol: 'TSLA.US',   prefix: '$', color: '#f43f5e', badge: 'STOCK'  },
@@ -35,7 +35,7 @@ const MARKET_CARDS = [
 
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmtPrice(price, key) {
-  if (price == null) return 'â€¦';
+  if (price == null) return '...';
   if (key === 'BTC/USDT')
     return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (key === 'EUR/USDT') return price.toFixed(4);
@@ -43,7 +43,7 @@ function fmtPrice(price, key) {
 }
 
 function fmtChange(change) {
-  if (change == null) return 'â€”';
+  if (change == null) return '-';
   return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
 }
 
@@ -55,7 +55,7 @@ function SparklineChart({ id, history, color = '#818cf8', height = 64 }) {
         style={{ height }}
         className="flex items-center justify-center text-zinc-700 text-[10px] font-mono"
       >
-        Building chartâ€¦
+        Building chart...
       </div>
     );
   }
@@ -102,7 +102,7 @@ function SparklineChart({ id, history, color = '#818cf8', height = 64 }) {
   );
 }
 
-// â”€â”€â”€ useLocalHistory â€” tracks sparkline history in component state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ useLocalHistory - tracks sparkline history in component state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function useLocalHistory(prices) {
   const [history, setHistory] = React.useState(() =>
     Object.fromEntries(
@@ -169,7 +169,7 @@ function MarketCard({ card, price, change, history }) {
             {prefix}{fmtPrice(price, key)}
           </p>
           <p className={`font-bold text-[10px] sm:text-[11px] mt-0.5 ${up ? 'text-emerald-400' : 'text-red-400'}`}>
-            {fmtChange(change)} {up ? 'â–²' : 'â–¼'}
+            {fmtChange(change)} {up ? '^' : 'v'}
           </p>
         </div>
       </div>
@@ -189,10 +189,10 @@ function MarketCard({ card, price, change, history }) {
 function WsStatusBadge({ status }) {
   const cfg = {
     live:       { dot: 'bg-emerald-400', label: 'Live' },
-    connecting: { dot: 'bg-amber-400',   label: 'Connectingâ€¦' },
+    connecting: { dot: 'bg-amber-400',   label: 'Connecting...' },
     offline:    { dot: 'bg-red-400',     label: 'Offline' },
     error:      { dot: 'bg-red-400',     label: 'Offline' },
-  }[status] ?? { dot: 'bg-zinc-500', label: 'â€¦' };
+  }[status] ?? { dot: 'bg-zinc-500', label: '...' };
 
   return (
     <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-violet-700/50 bg-violet-900/20 text-violet-300 text-xs font-semibold tracking-wider uppercase">
@@ -204,7 +204,7 @@ function WsStatusBadge({ status }) {
 
 // â”€â”€â”€ LandingPage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function LandingPage() {
-  /* Shared context â€” no duplicate WebSocket */
+  /* Shared context - no duplicate WebSocket */
   const { prices, wsStatus } = usePrices();
   const history = useLocalHistory(prices);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -241,7 +241,7 @@ export default function LandingPage() {
                   {item.prefix}{fmtPrice(p?.price, item.key)}
                 </span>
                 <span className={up ? 'text-violet-400' : 'text-red-400'}>
-                  {fmtChange(p?.change)} {up ? 'â–²' : 'â–¼'}
+                  {fmtChange(p?.change)} {up ? '^' : 'v'}
                 </span>
               </span>
             );

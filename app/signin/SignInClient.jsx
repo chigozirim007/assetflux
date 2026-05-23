@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePrices } from '../context/PriceContext';
+import { supabase } from '../lib/supabase';
 
 /*
  * Market rows shown in the left panel.
- * priceKey  â€” key in PriceContext
- * prefix    â€” currency symbol shown before the price
- * displayKey â€” label shown to the user (e.g. "EUR/USD" instead of "EUR/USDT")
+ * priceKey  - key in PriceContext
+ * prefix    - currency symbol shown before the price
+ * displayKey - label shown to the user (e.g. "EUR/USD" instead of "EUR/USDT")
  */
 const MARKET_ROWS = [
-  { priceKey: 'BTC/USDT',  label: 'Bitcoin',       displayKey: 'BTC/USDT', prefix: 'â‚¿',  color: '#f59e0b', decimals: 2  },
-  { priceKey: 'ETH/USDT',  label: 'Ethereum',       displayKey: 'ETH/USDT', prefix: 'Îž',  color: '#818cf8', decimals: 2  },
+  { priceKey: 'BTC/USDT',  label: 'Bitcoin',       displayKey: 'BTC/USDT', prefix: 'BTC',  color: '#f59e0b', decimals: 2  },
+  { priceKey: 'ETH/USDT',  label: 'Ethereum',       displayKey: 'ETH/USDT', prefix: 'ETH',  color: '#818cf8', decimals: 2  },
   { priceKey: 'SOL/USDT',  label: 'Solana',         displayKey: 'SOL/USDT', prefix: '$',  color: '#9945ff', decimals: 2  },
   { priceKey: 'EUR/USDT',  label: 'Euro / Dollar',  displayKey: 'EUR/USD',  prefix: '',   color: '#34d399', decimals: 4  },
   { priceKey: 'GBP/USDT',  label: 'Cable',          displayKey: 'GBP/USD',  prefix: '',   color: '#60a5fa', decimals: 4  },
@@ -22,9 +23,46 @@ const MARKET_ROWS = [
 ];
 
 function fmtP(v, decimals) {
-  if (v == null) return 'â€¦';
+  if (v == null) return '...';
   if (v > 999) return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return v.toFixed(decimals ?? 2);
+}
+
+function looksLikeEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function getAuthRedirectUrl() {
+  if (typeof window === 'undefined') return undefined;
+  return `${window.location.origin}/signin?confirmed=1`;
+}
+
+async function resolveLoginEmail(identifier) {
+  const login = identifier.trim();
+  if (looksLikeEmail(login)) {
+    return { email: login, profile: null };
+  }
+
+  const username = login.replace(/^@+/, '');
+  if (!username) throw new Error('Enter your email or username.');
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('email, username, first_name, last_name')
+    .ilike('username', username)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      error.message?.includes('email')
+        ? 'Username login needs the email field on profiles. Please run the latest Supabase schema migration.'
+        : error.message
+    );
+  }
+
+  if (!data?.email) throw new Error('No account was found for that username.');
+  return { email: data.email, profile: data };
 }
 
 /* â”€â”€ Animated grid background â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -92,7 +130,7 @@ function EyeIcon({ open }) {
 
 /* â”€â”€ Main Sign In Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function SignInClient() {
-  /* Real prices from global context â€” same WebSocket as every other page */
+  /* Real prices from global context - same WebSocket as every other page */
   const { prices, wsStatus } = usePrices();
 
   const [identifier, setIdentifier] = useState('');
@@ -101,29 +139,86 @@ export default function SignInClient() {
   const [remember,   setRemember]   = useState(false);
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState('');
+  const [notice,     setNotice]     = useState('');
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
+  const [resending,  setResending]  = useState(false);
   const [focusField, setFocusField] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!identifier || !password) { setError('Please fill in all fields.'); return; }
     setError('');
+    setNotice('');
+    setUnconfirmedEmail('');
     setLoading(true);
-    
-    // Simulate successful API call
-    await new Promise(r => setTimeout(r, 1400));
+
+    let resolved;
+    try {
+      resolved = await resolveLoginEmail(identifier);
+    } catch (err) {
+      setLoading(false);
+      setError(err.message || 'Unable to resolve that login.');
+      return;
+    }
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: resolved.email,
+      password: password,
+    });
+
+    if (authError) {
+      setLoading(false);
+      if (authError.message?.toLowerCase().includes('email not confirmed')) {
+        setUnconfirmedEmail(resolved.email);
+        setError('Your email is not confirmed yet. Confirm it from your inbox, or resend the confirmation email.');
+      } else {
+        setError(authError.message);
+      }
+      return;
+    }
     
     // Save user info for dashboard
-    localStorage.setItem('assetflux_user', JSON.stringify({ username: identifier.replace('@',''), name: identifier }));
+    const userMeta = data.user?.user_metadata || {};
+    const profile = resolved.profile;
+    const username = profile?.username || userMeta.username || resolved.email.split('@')[0];
+    const firstName = profile?.first_name || userMeta.firstName || '';
+    const lastName = profile?.last_name || userMeta.lastName || '';
+    const name = [firstName, lastName].filter(Boolean).join(' ') || username;
+
+    localStorage.setItem('assetflux_user', JSON.stringify({ username, name, email: resolved.email }));
     localStorage.setItem('isNewUser', 'false');
     
     // Redirect to dashboard
     window.location.href = '/dashboard';
   };
 
+  const resendConfirmation = async () => {
+    if (!unconfirmedEmail) return;
+    setResending(true);
+    setError('');
+    setNotice('');
+
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email: unconfirmedEmail,
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+      },
+    });
+
+    setResending(false);
+    if (resendError) {
+      setError(resendError.message);
+      return;
+    }
+
+    setNotice(`Confirmation email sent to ${unconfirmedEmail}.`);
+  };
+
   return (
     <div className="min-h-screen bg-[#05060f] text-white flex overflow-hidden">
 
-      {/* â”€â”€ LEFT PANEL â€” live market feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â”€â”€ LEFT PANEL - live market feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="hidden lg:flex flex-col flex-1 relative overflow-hidden border-r border-violet-900/20">
         <GridCanvas />
 
@@ -146,7 +241,7 @@ export default function SignInClient() {
               <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
                 wsStatus === 'live' ? 'bg-emerald-400' : wsStatus === 'error' ? 'bg-red-400' : 'bg-amber-400'
               }`} />
-              {wsStatus === 'live' ? 'Live Market Terminal' : 'Connectingâ€¦'}
+              {wsStatus === 'live' ? 'Live Market Terminal' : 'Connecting...'}
             </div>
             <h1 className="text-4xl xl:text-5xl font-extrabold leading-[1.1] tracking-tight mb-4">
               Financial data<br />
@@ -188,8 +283,8 @@ export default function SignInClient() {
                       </p>
                       <p className={`text-[10px] font-bold ${up ? 'text-emerald-400' : 'text-red-400'}`}>
                         {p?.change != null
-                          ? `${up ? '+' : ''}${p.change.toFixed(2)}% ${up ? 'â–²' : 'â–¼'}`
-                          : 'â€”'}
+                          ? `${up ? '+' : ''}${p.change.toFixed(2)}% ${up ? '^' : 'v'}`
+                          : '-'}
                       </p>
                     </div>
                   </div>
@@ -204,7 +299,7 @@ export default function SignInClient() {
         </div>
       </div>
 
-      {/* â”€â”€ RIGHT PANEL â€” Sign In form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â”€â”€ RIGHT PANEL - Sign In form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex-1 lg:max-w-[520px] flex items-center justify-center px-6 py-12 relative">
 
         <div className="lg:hidden pointer-events-none fixed inset-0 -z-10">
@@ -252,11 +347,29 @@ export default function SignInClient() {
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
             {error && (
-              <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {error}
+              <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-sm">
+                <div className="flex items-center gap-2.5">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span>{error}</span>
+                </div>
+                {unconfirmedEmail && (
+                  <button
+                    type="button"
+                    onClick={resendConfirmation}
+                    disabled={resending}
+                    className="mt-3 w-full rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-200 hover:bg-red-500/20 disabled:opacity-60"
+                  >
+                    {resending ? 'Sending confirmation...' : 'Resend confirmation email'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {notice && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                {notice}
               </div>
             )}
 
@@ -359,7 +472,7 @@ export default function SignInClient() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing inâ€¦
+                  Signing in...
                 </>
               ) : (
                 <>
@@ -375,7 +488,7 @@ export default function SignInClient() {
           <p className="text-center text-sm text-zinc-500 mt-7">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-violet-400 font-semibold hover:text-violet-300 transition">
-              Create one free â†’
+              Create one free &rarr;
             </Link>
           </p>
 

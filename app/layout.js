@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "AssetFlux â€” Financial Data Unlocked",
+  title: "AssetFlux - Financial Data Unlocked",
   description:
     "Real-time insights across Stocks, Crypto, Shares and Forex. Connect with verified experts through our social trading terminal.",
   icons: {

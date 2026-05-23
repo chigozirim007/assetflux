@@ -3,7 +3,7 @@ import TradingChartCard   from '../components/TradingChartCard';
 import { CRYPTO }         from '../constants/instruments';
 
 export const metadata = {
-  title: 'Crypto Markets â€” AssetFlux',
+  title: 'Crypto Markets - AssetFlux',
   description: 'Live millisecond candlestick charts for top 50 cryptocurrencies via Binance WebSocket.',
 };
 

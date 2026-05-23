@@ -59,7 +59,7 @@ export default function Header({ active }) {
             Sign up
           </Link>
 
-          {/* Hamburger â€” visible below lg */}
+          {/* Hamburger - visible below lg */}
           <button
             aria-label="Toggle navigation menu"
             aria-expanded={menuOpen}

@@ -3,7 +3,7 @@ import TradingChartCard   from '../components/TradingChartCard';
 import { FOREX }          from '../constants/instruments';
 
 export const metadata = {
-  title: 'Forex Markets â€” AssetFlux',
+  title: 'Forex Markets - AssetFlux',
   description: 'Live candlestick charts for 50 major Forex currency pairs with real-time price updates.',
 };
 

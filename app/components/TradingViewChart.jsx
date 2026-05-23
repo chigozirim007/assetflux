@@ -3,7 +3,7 @@
 import { useEffect, useRef, useId } from 'react';
 
 /*
- * TradingViewChart â€” embeds TradingView's free Advanced Real-Time Chart widget.
+ * TradingViewChart - embeds TradingView's free Advanced Real-Time Chart widget.
  * Live data, built-in timeframe selector (click-based), price axis on the right.
  * Crypto: BINANCE:BTCUSDT  |  Forex: FX:EURUSD  |  Stocks: NASDAQ:AAPL
  */
@@ -64,7 +64,7 @@ export default function TradingViewChart({
           // Scale text
           'scalesProperties.textColor':              '#71717a',
           'scalesProperties.fontSize':               11,
-          // Candles â€” green up, red down
+          // Candles - green up, red down
           'mainSeriesProperties.candleStyle.upColor':          '#10b981',
           'mainSeriesProperties.candleStyle.downColor':        '#ef4444',
           'mainSeriesProperties.candleStyle.borderUpColor':    '#10b981',
@@ -89,7 +89,7 @@ export default function TradingViewChart({
       script.onload = initWidget;
       document.head.appendChild(script);
     } else {
-      // Script tag exists but hasn't fired yet â€” poll
+      // Script tag exists but hasn't fired yet - poll
       const poll = setInterval(() => {
         if (window.TradingView) { clearInterval(poll); initWidget(); }
       }, 80);

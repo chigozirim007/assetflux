@@ -1,7 +1,7 @@
 import SignInClient from './SignInClient';
 
 export const metadata = {
-  title: 'Sign In â€” AssetFlux',
+  title: 'Sign In - AssetFlux',
   description: 'Sign in to your AssetFlux account and access real-time financial markets.',
 };
 

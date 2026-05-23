@@ -6,12 +6,12 @@ import TradingViewChart from './TradingViewChart';
 
 /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function fmtPrice(price, decimals) {
-  if (price == null) return 'â€”';
+  if (price == null) return '-';
   if (price > 999) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return price.toFixed(decimals ?? 2);
 }
 function fmtChange(c) {
-  if (c == null) return 'â€”';
+  if (c == null) return '-';
   return `${c >= 0 ? '+' : ''}${c.toFixed(2)}%`;
 }
 
@@ -85,10 +85,10 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
         </div>
         <div className="text-right flex-shrink-0">
           <p ref={priceRef} className="price-num text-sm sm:text-base font-bold" style={{ color }}>
-            {mounted ? fmtPrice(displayPrice, decimalPlaces) : 'â€”'}
+            {mounted ? fmtPrice(displayPrice, decimalPlaces) : '-'}
           </p>
           <p className={`font-bold text-[10px] sm:text-[11px] mt-0.5 ${displayUp ? 'text-emerald-400' : 'text-red-400'}`}>
-            {mounted ? fmtChange(displayChange) : 'â€”'} {displayUp ? 'â–²' : 'â–¼'}
+            {mounted ? fmtChange(displayChange) : '-'} {displayUp ? '^' : 'v'}
           </p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
               ) : 'bg-zinc-800'
             }`} />
             <span className="text-[9px] text-zinc-500 font-mono whitespace-nowrap uppercase">
-              {mounted ? (isCrypto ? (wsStatus === 'live' ? 'WS LIVE' : 'CONNâ€¦') : 'POLLING') : 'INITâ€¦'}
+              {mounted ? (isCrypto ? (wsStatus === 'live' ? 'WS LIVE' : 'CONN...') : 'POLLING') : 'INIT...'}
             </span>
           </div>
         </div>

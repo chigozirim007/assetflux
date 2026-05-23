@@ -3,7 +3,7 @@ import LineChartCard      from '../components/LineChartCard';
 import { STOCKS }         from '../constants/instruments';
 
 export const metadata = {
-  title: 'Global Stocks â€” AssetFlux',
+  title: 'Global Stocks - AssetFlux',
   description: 'Live price charts for top 50 global companies with high-performance tracking.',
 };
 
@@ -11,7 +11,7 @@ export default function StocksPage() {
   return (
     <CategoryPageLayout
       title="Global Stocks"
-      subtitle="Top 50 global companies â€” US Tech, Finance, Retail & more with live charts."
+      subtitle="Top 50 global companies - US Tech, Finance, Retail & more with live charts."
       category="stocks"
       badge="2s Refresh"
     >

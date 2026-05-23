@@ -2,7 +2,7 @@ import Link from 'next/link';
 import CategoryPageLayout from '../components/CategoryPageLayout';
 
 export const metadata = {
-  title: 'Experts â€” AssetFlux',
+  title: 'Experts - AssetFlux',
   description: 'Connect with verified financial experts with proven track records on AssetFlux.',
 };
 
@@ -41,7 +41,7 @@ export default function ExpertsPage() {
         </h2>
         <p className="text-zinc-400 max-w-md text-sm sm:text-base leading-relaxed mb-8">
           Follow verified experts with audited portfolios, copy their trades, and track performance
-          across Crypto, Forex, Stocks and Real Estate â€” all in one place.
+          across Crypto, Forex, Stocks and Real Estate - all in one place.
         </p>
 
         <div className="flex flex-wrap gap-2 justify-center mb-10">
@@ -61,7 +61,7 @@ export default function ExpertsPage() {
               className="px-5 py-2 rounded-xl border border-zinc-800 text-sm font-semibold hover:border-violet-700/60 hover:bg-violet-900/15 transition-all duration-200"
               style={{ color: cat.color }}
             >
-              {cat.label} â†’
+              {`${cat.label} ->`}
             </Link>
           ))}
         </div>

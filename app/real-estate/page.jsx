@@ -3,7 +3,7 @@ import LineChartCard      from '../components/LineChartCard';
 import { REAL_ESTATE }    from '../constants/instruments';
 
 export const metadata = {
-  title: 'Real Estate â€” AssetFlux',
+  title: 'Real Estate - AssetFlux',
   description: 'Live price charts for 50 major REITs and real estate investment trusts.',
 };
 
@@ -11,7 +11,7 @@ export default function RealEstatePage() {
   return (
     <CategoryPageLayout
       title="Real Estate"
-      subtitle="Top 50 REITs and real estate investment trusts â€” residential, commercial, industrial & data centers."
+      subtitle="Top 50 REITs and real estate investment trusts - residential, commercial, industrial & data centers."
       category="real-estate"
       badge="2s Refresh"
     >

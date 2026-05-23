@@ -139,7 +139,7 @@ export default function CategoryPageLayout({ title, subtitle, category, badge, c
                <div className="px-6 py-4 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10">
                   <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Live Price</p>
                   <p className="text-2xl font-black text-white font-mono">
-                    {prices[expandedChart.symbol]?.price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) || 'â€”'}
+                    {prices[expandedChart.symbol]?.price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) || '-'}
                   </p>
                </div>
                <div className={`px-6 py-4 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 ${

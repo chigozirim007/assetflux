@@ -1,23 +1,29 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '../lib/supabase';
 
 const CATEGORIES = [
-  { id: 'crypto',      label: 'Crypto',      icon: 'â‚¿', color: '#f59e0b', desc: 'BTC, ETH & more' },
+  { id: 'crypto',      label: 'Crypto',      icon: 'BTC', color: '#f59e0b', desc: 'BTC, ETH & more' },
   { id: 'forex',       label: 'Forex',        icon: 'â‚¬', color: '#34d399', desc: 'Major currency pairs' },
-  { id: 'stocks',      label: 'Stocks',       icon: 'ðŸ“ˆ', color: '#818cf8', desc: 'US & global equities' },
+  { id: 'stocks',      label: 'Stocks',       icon: '', color: '#818cf8', desc: 'US & global equities' },
   { id: 'shares',      label: 'Shares',       icon: 'ðŸ¢', color: '#60a5fa', desc: 'Fractional shares' },
   { id: 'real-estate', label: 'Real Estate',  icon: 'ðŸ ', color: '#fb923c', desc: 'REITs & property' },
 ];
 
 const NOTIF = [
-  { id: 'email', label: 'Email notifications',       icon: 'ðŸ“§', desc: 'Trade alerts & updates' },
-  { id: 'sms',   label: 'Phone / SMS alerts',        icon: 'ðŸ“±', desc: 'Instant price alerts' },
-  { id: 'web',   label: 'Web push notifications',    icon: 'ðŸ””', desc: 'Browser notifications' },
-  { id: 'digest',label: 'Weekly market digest',      icon: 'ðŸ“Š', desc: 'Summary every Monday' },
+  { id: 'email', label: 'Email notifications',       icon: '', desc: 'Trade alerts & updates' },
+  { id: 'sms',   label: 'Phone / SMS alerts',        icon: '', desc: 'Instant price alerts' },
+  { id: 'web',   label: 'Web push notifications',    icon: '', desc: 'Browser notifications' },
+  { id: 'digest',label: 'Weekly market digest',      icon: '', desc: 'Summary every Monday' },
 ];
 
 const STEPS = ['Personal Details', 'Your Interests', 'Account Security'];
+
+function getAuthRedirectUrl() {
+  if (typeof window === 'undefined') return undefined;
+  return `${window.location.origin}/signin?confirmed=1`;
+}
 
 function PasswordStrength({ pw }) {
   const score = [/.{8,}/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter(r => r.test(pw)).length;
@@ -128,6 +134,7 @@ export default function SignUpClient() {
       if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
     }
     if (step === 2) {
+      if (!form.twoFA) e.twoFA = 'Two-factor authentication is required';
       if (!form.agreeTerms)   e.agreeTerms   = 'You must accept the Terms';
       if (!form.agreePrivacy) e.agreePrivacy = 'You must accept the Privacy Policy';
     }
@@ -142,22 +149,46 @@ export default function SignUpClient() {
     if (!validateStep()) return;
     setLoading(true);
     
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1600));
-    
-    // Persist interests for the dashboard
     const selectedCats = Object.keys(cats).filter(id => cats[id]);
+
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+        data: {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          username: form.username,
+          email: form.email,
+          phone: form.phone,
+          twoFA: form.twoFA,
+          interests: selectedCats,
+        }
+      }
+    });
+
+    if (error) {
+      setLoading(false);
+      setErrors({ ...errors, global: error.message });
+      return;
+    }
+    
+    if (data.user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ email: form.email, interests: selectedCats, two_fa_enabled: form.twoFA })
+        .eq('id', data.user.id);
+    }
+
+    // Persist interests for the dashboard
     localStorage.setItem('assetflux_interests', JSON.stringify(selectedCats));
-    localStorage.setItem('assetflux_user', JSON.stringify({ username: form.username, name: `${form.firstName} ${form.lastName}` }));
+    document.cookie = `assetflux_interests=${encodeURIComponent(JSON.stringify(selectedCats))}; path=/; max-age=31536000; SameSite=Lax`;
+    localStorage.setItem('assetflux_user', JSON.stringify({ username: form.username, email: form.email, name: `${form.firstName} ${form.lastName}` }));
     localStorage.setItem('isNewUser', 'true');
     
     setLoading(false);
     setDone(true);
-    
-    // Auto-redirect after a short delay
-    setTimeout(() => {
-      window.location.href = '/dashboard';
-    }, 2000);
   };
 
   if (done) return (
@@ -172,10 +203,10 @@ export default function SignUpClient() {
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
-        <h1 className="text-3xl font-extrabold text-white mb-3">Account Created!</h1>
-        <p className="text-zinc-400 text-sm mb-8">Welcome to AssetFlux, <span className="text-violet-400 font-semibold">@{form.username}</span>. Your terminal is ready.</p>
+        <h1 className="text-3xl font-extrabold text-white mb-3">Confirm your email</h1>
+        <p className="text-zinc-400 text-sm mb-8">Welcome to AssetFlux, <span className="text-violet-400 font-semibold">@{form.username}</span>. Check {form.email} and confirm your email before signing in.</p>
         <Link href="/signin" className="inline-block bg-violet-600 hover:bg-violet-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-[0_0_25px_rgba(124,58,237,0.4)] hover:shadow-[0_0_40px_rgba(124,58,237,0.6)] transition-all duration-300 text-sm">
-          Sign in now â†’
+          Sign in now &rarr;
         </Link>
       </div>
     </div>
@@ -203,7 +234,7 @@ export default function SignUpClient() {
                   i < step  ? 'bg-violet-600 border-violet-600 text-white' :
                   i === step ? 'border-violet-500 text-violet-400 shadow-[0_0_12px_rgba(124,58,237,0.4)]' :
                   'border-zinc-700 text-zinc-600'}`}>
-                  {i < step ? 'âœ“' : i + 1}
+                  {i < step ? 'Check' : i + 1}
                 </div>
                 <span className={`text-[10px] font-semibold whitespace-nowrap ${i === step ? 'text-violet-400' : 'text-zinc-600'}`}>
                   {label}
@@ -229,16 +260,16 @@ export default function SignUpClient() {
 
               <div className="grid grid-cols-2 gap-3">
                 <InputField id="firstName" label="First Name" value={form.firstName}
-                  onChange={e => set('firstName', e.target.value)} placeholder="Jane"
+                  onChange={e => set('firstName', e.target.value)} placeholder=""
                   error={errors.firstName} autoComplete="given-name" />
                 <InputField id="lastName" label="Surname" value={form.lastName}
-                  onChange={e => set('lastName', e.target.value)} placeholder="Doe"
+                  onChange={e => set('lastName', e.target.value)} placeholder=""
                   error={errors.lastName} autoComplete="family-name" />
               </div>
 
               <InputField id="username" label="Username" value={form.username}
                 onChange={e => set('username', e.target.value.replace(/\s/g,''))}
-                placeholder="janedoe" prefix="@" error={errors.username} autoComplete="username" />
+                placeholder="" prefix="@" error={errors.username} autoComplete="username" />
 
               <InputField id="email" label="Email Address" type="email" value={form.email}
                 onChange={e => set('email', e.target.value)} placeholder="you@example.com"
@@ -293,7 +324,7 @@ export default function SignUpClient() {
             <div>
               <div className="mb-6">
                 <h2 className="text-2xl font-extrabold tracking-tight">Your Interests</h2>
-                <p className="text-zinc-500 text-sm mt-1">Personalise your terminal â€” pick as many as you like</p>
+                <p className="text-zinc-500 text-sm mt-1">Personalise your terminal - pick as many as you like</p>
               </div>
 
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">Which categories are you interested in?</p>
@@ -311,7 +342,6 @@ export default function SignUpClient() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xl w-8 text-center">{c.icon}</span>
                       <div>
                         <p className="text-sm font-bold text-white">{c.label}</p>
                         <p className="text-[10px] text-zinc-500">{c.desc}</p>
@@ -331,7 +361,6 @@ export default function SignUpClient() {
                         ? 'border-violet-600/50 bg-violet-900/10'
                         : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700'}`}>
                     <Checkbox id={`notif-${n.id}`} checked={!!notifs[n.id]} onChange={() => toggleNotif(n.id)} />
-                    <span className="text-lg w-6 text-center flex-shrink-0">{n.icon}</span>
                     <div>
                       <p className="text-sm font-semibold text-white">{n.label}</p>
                       <p className="text-[10px] text-zinc-500">{n.desc}</p>
@@ -353,14 +382,15 @@ export default function SignUpClient() {
               {/* 2FA toggle */}
               <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-800 bg-zinc-900/30">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-violet-900/30 border border-violet-700/30 flex items-center justify-center text-lg">ðŸ”</div>
+                  <div className="w-10 h-10 rounded-xl bg-violet-900/30 border border-violet-700/30 flex items-center justify-center text-lg"></div>
                   <div>
                     <p className="text-sm font-bold text-white">Two-Factor Authentication</p>
-                    <p className="text-[10px] text-zinc-500">Secure your account with 2FA</p>
+                    <p className="text-[10px] text-zinc-500">Required before creating an AssetFlux account</p>
                   </div>
                 </div>
                 <Toggle on={form.twoFA} onChange={() => set('twoFA', !form.twoFA)} />
               </div>
+              {errors.twoFA && <p className="text-red-400 text-xs pl-1">{errors.twoFA}</p>}
 
               {/* Referral code */}
               <InputField id="referral" label="Referral Code (optional)" value={form.referral}
@@ -391,10 +421,16 @@ export default function SignUpClient() {
 
               {/* Summary */}
               <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-500 space-y-1">
-                <p>ðŸ“¬ Interests: <span className="text-zinc-300">{Object.keys(cats).filter(k => cats[k]).map(k => CATEGORIES.find(c => c.id===k)?.label).join(', ') || 'None selected'}</span></p>
-                <p>ðŸ”” Notifications: <span className="text-zinc-300">{Object.keys(notifs).filter(k => notifs[k]).map(k => NOTIF.find(n => n.id===k)?.label).join(', ') || 'None'}</span></p>
-                <p>ðŸ” 2FA: <span className={form.twoFA ? 'text-emerald-400' : 'text-zinc-500'}>{form.twoFA ? 'Enabled' : 'Disabled'}</span></p>
+                <p> Interests: <span className="text-zinc-300">{Object.keys(cats).filter(k => cats[k]).map(k => CATEGORIES.find(c => c.id===k)?.label).join(', ') || 'None selected'}</span></p>
+                <p> Notifications: <span className="text-zinc-300">{Object.keys(notifs).filter(k => notifs[k]).map(k => NOTIF.find(n => n.id===k)?.label).join(', ') || 'None'}</span></p>
+                <p> 2FA: <span className={form.twoFA ? 'text-emerald-400' : 'text-zinc-500'}>{form.twoFA ? 'Enabled' : 'Disabled'}</span></p>
               </div>
+
+              {errors.global && (
+                <div className="p-3 mt-4 text-sm font-semibold text-red-400 border border-red-500/30 bg-red-500/10 rounded-xl">
+                  {errors.global}
+                </div>
+              )}
             </div>
           )}
 
@@ -403,20 +439,20 @@ export default function SignUpClient() {
             {step > 0 && (
               <button type="button" onClick={back}
                 className="px-6 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-semibold text-sm hover:border-violet-600/60 hover:text-violet-300 transition-all duration-200">
-                â† Back
+                &larr; Back
               </button>
             )}
             {step < 2 ? (
               <button type="button" id={`step${step}-next`} onClick={next}
                 className="flex-1 bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_35px_rgba(124,58,237,0.5)] transition-all duration-300 text-sm">
-                Continue â†’
+                Continue &rarr;
               </button>
             ) : (
               <button type="button" id="signup-submit" onClick={submit} disabled={loading}
                 className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl shadow-[0_0_25px_rgba(124,58,237,0.4)] hover:shadow-[0_0_45px_rgba(124,58,237,0.6)] transition-all duration-300 text-sm flex items-center justify-center gap-2">
                 {loading ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Creating accountâ€¦</>
-                ) : 'ðŸš€ Create my account'}
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Creating account...</>
+                ) : ' Create my account'}
               </button>
             )}
           </div>
@@ -424,7 +460,7 @@ export default function SignUpClient() {
 
         <p className="text-center text-sm text-zinc-600 mt-6">
           Already have an account?{' '}
-          <Link href="/signin" className="text-violet-400 font-semibold hover:text-violet-300 transition">Sign in â†’</Link>
+          <Link href="/signin" className="text-violet-400 font-semibold hover:text-violet-300 transition">Sign in &rarr;</Link>
         </p>
       </div>
     </div>

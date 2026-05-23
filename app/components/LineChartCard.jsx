@@ -14,17 +14,17 @@ const TIMEFRAMES = [
 
 /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function fmtPrice(v, decimals = 2) {
-  if (v == null) return 'â€”';
+  if (v == null) return '-';
   if (v > 999) return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return v.toFixed(decimals);
 }
 
 function fmtChange(c) {
-  if (c == null) return 'â€”';
+  if (c == null) return '-';
   return `${c >= 0 ? '+' : ''}${c.toFixed(2)}%`;
 }
 
-/* â”€â”€ Build ECharts option â€” smooth line + gradient area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Build ECharts option - smooth line + gradient area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function buildOption(closes, timestamps, color, tfLabel, isExpanded = false) {
   // Format x-axis labels based on timeframe
   const labels = timestamps.map(ts => {
@@ -209,7 +209,7 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
           <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-black text-white leading-tight">
-                {mounted ? fmtPrice(displayPrice) : 'â€”'}
+                {mounted ? fmtPrice(displayPrice) : '-'}
               </h3>
               <button 
                 onClick={() => onExpand && onExpand(instrument)}
@@ -222,7 +222,7 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
             <div className="flex items-center gap-1.5">
               <span className={`w-2.5 h-2.5 rounded-full ${mounted ? (isMarketOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-400') : 'bg-zinc-800'}`} />
               <span className="text-[11px] font-medium text-zinc-500 tracking-tight">
-                {mounted ? (isMarketOpen ? 'Market open' : 'Market closed') : 'Checking statusâ€¦'}
+                {mounted ? (isMarketOpen ? 'Market open' : 'Market closed') : 'Checking status...'}
               </span>
             </div>
           </div>

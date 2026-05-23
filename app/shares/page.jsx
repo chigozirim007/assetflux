@@ -3,7 +3,7 @@ import LineChartCard      from '../components/LineChartCard';
 import { SHARES }         from '../constants/instruments';
 
 export const metadata = {
-  title: 'Shares & ETFs â€” AssetFlux',
+  title: 'Shares & ETFs - AssetFlux',
   description: 'Live price charts for 50 major ETFs, index funds and sector trackers.',
 };
 

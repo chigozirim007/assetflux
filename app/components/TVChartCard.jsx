@@ -5,29 +5,29 @@ import { usePrices } from '../context/PriceContext';
 import TradingViewChart from './TradingViewChart';
 
 function fmtPrice(price, decimals) {
-  if (price == null) return 'â€”';
+  if (price == null) return '-';
   if (price > 999)
     return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return price.toFixed(decimals ?? (price < 10 ? 4 : 2));
 }
 function fmtChange(c) {
-  if (c == null) return 'â€”';
+  if (c == null) return '-';
   return `${c >= 0 ? '+' : ''}${c.toFixed(2)}%`;
 }
 
 /*
- * TVChartCard â€” card wrapper around TradingView widget.
+ * TVChartCard - card wrapper around TradingView widget.
  * Price badge in the header is sourced from the global PriceContext (real-time Binance WS / polling).
  *
  * instrument props:
- *   tvSymbol      â€” TradingView symbol  e.g. "BINANCE:BTCUSDT", "FX:EURUSD"
- *   priceKey      â€” key into PriceContext  e.g. "BTC/USDT", "EUR/USDT"
- *   name          â€” display name
- *   displaySymbol â€” short label
- *   color         â€” accent hex
- *   decimals      â€” optional decimal places override
- *   defaultInterval â€” TV interval string default "15"
- *   badge         â€” optional badge text (e.g. "CRYPTO", "FOREX")
+ *   tvSymbol      - TradingView symbol  e.g. "BINANCE:BTCUSDT", "FX:EURUSD"
+ *   priceKey      - key into PriceContext  e.g. "BTC/USDT", "EUR/USDT"
+ *   name          - display name
+ *   displaySymbol - short label
+ *   color         - accent hex
+ *   decimals      - optional decimal places override
+ *   defaultInterval - TV interval string default "15"
+ *   badge         - optional badge text (e.g. "CRYPTO", "FOREX")
  */
 export default function TVChartCard({ instrument }) {
   const {
@@ -89,7 +89,7 @@ export default function TVChartCard({ instrument }) {
             {fmtPrice(price, decimals)}
           </p>
           <p className={`font-bold text-[10px] sm:text-[11px] mt-0.5 ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-            {fmtChange(change)} {isUp ? 'â–²' : 'â–¼'}
+            {fmtChange(change)} {isUp ? '^' : 'v'}
           </p>
         </div>
       </div>
