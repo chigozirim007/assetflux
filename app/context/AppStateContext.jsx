@@ -12,6 +12,8 @@ const DEFAULT_NOTIFICATIONS = {
   webPush: false,
 };
 
+const DEFAULT_POSTS = [];
+
 const AppStateContext = createContext(null);
 
 function readCookie(name) {
@@ -37,6 +39,7 @@ export function AppStateProvider({ children }) {
   const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
   const [followedUsers, setFollowedUsers] = useState([]);
   const [subscribedCreators, setSubscribedCreators] = useState([]);
+  const [posts, setPosts] = useState(DEFAULT_POSTS);
   const [locale, setLocale] = useState('en-US');
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
 
@@ -81,6 +84,7 @@ export function AppStateProvider({ children }) {
       if (parsed.notifications) setNotifications(prev => ({ ...prev, ...parsed.notifications }));
       if (Array.isArray(parsed.followedUsers)) setFollowedUsers(parsed.followedUsers);
       if (Array.isArray(parsed.subscribedCreators)) setSubscribedCreators(parsed.subscribedCreators);
+      if (Array.isArray(parsed.posts)) setPosts(parsed.posts);
       if (parsed.locale) setLocale(parsed.locale);
       if (parsed.timezone) setTimezone(parsed.timezone);
       if (parsed.user) setUser(prev => ({ ...prev, ...parsed.user }));
@@ -150,6 +154,7 @@ export function AppStateProvider({ children }) {
       notifications,
       followedUsers,
       subscribedCreators,
+      posts,
       locale,
       timezone,
       user,
@@ -159,7 +164,13 @@ export function AppStateProvider({ children }) {
     } catch {
       // ignore persistence failures
     }
-  }, [selectedCategories, viewMode, feedMode, terminalMode, notifications, followedUsers, subscribedCreators, locale, timezone, user]);
+  }, [selectedCategories, viewMode, feedMode, terminalMode, notifications, followedUsers, subscribedCreators, posts, locale, timezone, user]);
+
+  const getAuthor = () => ({
+    id: user.id || user.username || user.email || 'local-user',
+    username: user.username || user.email?.split('@')[0] || 'assetflux_user',
+    name: user.name || user.username || 'AssetFlux User',
+  });
 
   const value = useMemo(() => ({
     selectedCategories,
@@ -176,6 +187,8 @@ export function AppStateProvider({ children }) {
     setFollowedUsers,
     subscribedCreators,
     setSubscribedCreators,
+    posts,
+    setPosts,
     locale,
     setLocale,
     timezone,
@@ -201,12 +214,66 @@ export function AppStateProvider({ children }) {
         ? prev.filter(id => id !== creatorId)
         : [...prev, creatorId]);
     },
+    createPost: ({ category, content }) => {
+      const author = getAuthor();
+      const now = new Date().toISOString();
+      const post = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+        category,
+        content,
+        author,
+        likes: [],
+        comments: [],
+        createdAt: now,
+        updatedAt: now,
+      };
+      setPosts(prev => [post, ...prev]);
+      return post;
+    },
+    updatePost: (postId, payload) => {
+      setPosts(prev => prev.map(post => post.id === postId
+        ? { ...post, ...payload, updatedAt: new Date().toISOString() }
+        : post));
+    },
+    deletePost: (postId) => {
+      setPosts(prev => prev.filter(post => post.id !== postId));
+    },
+    toggleLikePost: (postId) => {
+      const author = getAuthor();
+      setPosts(prev => prev.map(post => {
+        if (post.id !== postId) return post;
+        const likes = post.likes || [];
+        return {
+          ...post,
+          likes: likes.includes(author.id)
+            ? likes.filter(id => id !== author.id)
+            : [...likes, author.id],
+        };
+      }));
+    },
+    addComment: (postId, content) => {
+      const author = getAuthor();
+      setPosts(prev => prev.map(post => post.id === postId
+        ? {
+            ...post,
+            comments: [
+              ...(post.comments || []),
+              {
+                id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+                content,
+                author,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }
+        : post));
+    },
     updateNotification: (key, value) => {
       setNotifications(prev => ({ ...prev, [key]: value }));
     },
     isFollowing: (username) => followedUsers.includes(username),
     isSubscribed: (creatorId) => subscribedCreators.includes(creatorId),
-  }), [selectedCategories, viewMode, feedMode, terminalMode, notifications, followedUsers, subscribedCreators, locale, timezone, user]);
+  }), [selectedCategories, viewMode, feedMode, terminalMode, notifications, followedUsers, subscribedCreators, posts, locale, timezone, user]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }

@@ -127,6 +127,7 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
   const [loading,  setLoading]  = useState(true);
   const [chartReady, setChartReady] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [localExpanded, setLocalExpanded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -212,7 +213,7 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
                 {mounted ? fmtPrice(displayPrice) : '-'}
               </h3>
               <button 
-                onClick={() => onExpand && onExpand(instrument)}
+                onClick={() => onExpand ? onExpand(instrument) : setLocalExpanded(true)}
                 className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-white transition-all transform hover:scale-110"
                 title="Expand Chart"
               >
@@ -257,6 +258,26 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
           </button>
         ))}
       </div>
+
+      {localExpanded && !isExpanded && (
+        <div className="fixed inset-0 z-[120] bg-[#05060f]/80 p-3 backdrop-blur-2xl sm:p-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-black text-white">{name}</p>
+              <p className="text-xs font-mono text-zinc-500">{displaySymbol || symbol}</p>
+            </div>
+            <button
+              onClick={() => setLocalExpanded(false)}
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-zinc-200 hover:bg-white/10"
+            >
+              Exit Focus
+            </button>
+          </div>
+          <div className="h-[calc(100vh-92px)] overflow-hidden rounded-2xl border border-white/10 bg-[#0d0f1e]">
+            <LineChartCard instrument={instrument} isExpanded />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

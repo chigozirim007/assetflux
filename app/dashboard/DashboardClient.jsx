@@ -23,6 +23,7 @@ import StockModule from '../components/modules/StockModule';
 import RealEstateModule from '../components/modules/RealEstateModule';
 
 import LiveNewsSidebar from '../components/LiveNewsSidebar';
+import SocialFeed from '../components/features/SocialFeed';
 
 const CATEGORY_META = {
   crypto: {
@@ -54,6 +55,7 @@ const CATEGORY_META = {
 
 const TABS = [
   ['terminal', 'Market Workspace'],
+  ['news', 'News'],
   ['portfolio', 'Portfolio'],
   ['alerts', 'Alerts'],
   ['intel', 'Intelligence'],
@@ -91,7 +93,7 @@ function EmptyState({ title, body, action }) {
 
 function CategoryTabs({ categories, activeCategory, onSelect }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex w-full gap-2 overflow-x-auto pb-1 lg:w-auto lg:flex-nowrap">
       {categories.map(category => {
         const meta = CATEGORY_META[category];
         if (!meta) return null;
@@ -100,7 +102,7 @@ function CategoryTabs({ categories, activeCategory, onSelect }) {
           <button
             key={category}
             onClick={() => onSelect(category)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition ${
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition ${
               active
                 ? 'bg-violet-600 border-violet-500 text-white'
                 : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200'
@@ -131,10 +133,7 @@ function CategoryCommunity({ category }) {
         <h3 className="text-sm font-bold">{label} Posts</h3>
         <Link href="/profile" className="text-[11px] text-cyan-300 hover:text-cyan-200">Open social graph</Link>
       </div>
-      <EmptyState
-        title="No posts in this workspace yet"
-        body={`Mentor notes, trade ideas, and category-specific discussions for ${label.toLowerCase()} will appear here after people you follow start posting.`}
-      />
+      <SocialFeed category={category} title={`${label} Feed`} />
     </div>
   );
 }
@@ -142,6 +141,7 @@ function CategoryCommunity({ category }) {
 export default function DashboardClient() {
   const [tab, setTab] = useState('terminal');
   const [activeCategory, setActiveCategory] = useState('');
+  const [activeNewsCategory, setActiveNewsCategory] = useState('');
   const [selectedNews, setSelectedNews] = useState(null);
 
   const { prices } = usePrices();
@@ -168,20 +168,33 @@ export default function DashboardClient() {
     }
   }, [activeCategory, availableCategories]);
 
+  useEffect(() => {
+    if (!availableCategories.length) {
+      setActiveNewsCategory('');
+      return;
+    }
+    if (!activeNewsCategory || !availableCategories.includes(activeNewsCategory)) {
+      setActiveNewsCategory(availableCategories[0]);
+    }
+  }, [activeNewsCategory, availableCategories]);
+
   const currentCategory = activeCategory && availableCategories.includes(activeCategory)
     ? activeCategory
     : availableCategories[0] || '';
   const activeMeta = CATEGORY_META[currentCategory];
   const watched = activeMeta?.tickers || [];
   const displayName = user.name || user.username || 'AssetFlux User';
+  const currentNewsCategory = activeNewsCategory && availableCategories.includes(activeNewsCategory)
+    ? activeNewsCategory
+    : availableCategories[0] || '';
   const activeNewsCategories = useMemo(
-    () => currentCategory ? [currentCategory] : [],
-    [currentCategory]
+    () => currentNewsCategory ? [currentNewsCategory] : [],
+    [currentNewsCategory]
   );
 
   return (
     <div className="min-h-screen bg-[#05060f] text-white">
-      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 xl:grid-cols-[280px_1fr_340px] gap-6">
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] gap-6">
 
         <aside className="space-y-4 xl:sticky xl:top-4 self-start">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
@@ -225,7 +238,7 @@ export default function DashboardClient() {
           </div>
         </aside>
 
-        <main className="space-y-5">
+        <main className="min-w-0 space-y-5">
           {tab === 'terminal' && (
             <div className="space-y-5">
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
@@ -255,6 +268,52 @@ export default function DashboardClient() {
                   <MarketModule category={currentCategory} />
                   <CategoryCommunity category={currentCategory} />
                 </>
+              )}
+            </div>
+          )}
+
+          {tab === 'news' && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="text-sm font-black">Market Intelligence</p>
+                    <p className="text-xs text-zinc-500">
+                      {availableCategories.length > 1
+                        ? 'Choose a market to view category-specific news.'
+                        : 'News is filtered to your selected market.'}
+                    </p>
+                  </div>
+                  {availableCategories.length > 1 && (
+                    <CategoryTabs categories={availableCategories} activeCategory={currentNewsCategory} onSelect={setActiveNewsCategory} />
+                  )}
+                </div>
+              </div>
+
+              {!availableCategories.length ? (
+                <EmptyState
+                  title="No market interests selected"
+                  body="Choose your markets before opening a personalized news feed."
+                  action={<Link href="/account-settings" className="inline-flex mt-4 px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold">Choose interests</Link>}
+                />
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+                  <div className="h-[620px] overflow-hidden rounded-2xl border border-zinc-800">
+                    <LiveNewsSidebar categories={activeNewsCategories} onSelect={setSelectedNews} />
+                  </div>
+                  {selectedNews ? (
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-300">
+                      <p className="font-bold text-white mb-2">{selectedNews.headline}</p>
+                      <p className="text-xs text-zinc-500 mb-3">{selectedNews.source}</p>
+                      <p className="leading-relaxed">{selectedNews.content}</p>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="Select a headline"
+                      body="Click a market-intelligence item to keep the full context beside your feed."
+                    />
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -303,23 +362,6 @@ export default function DashboardClient() {
             </div>
           )}
         </main>
-
-        <aside className="space-y-4">
-          <div className="h-[520px] rounded-2xl overflow-hidden border border-zinc-800">
-            <LiveNewsSidebar categories={activeNewsCategories} onSelect={setSelectedNews} />
-          </div>
-          {selectedNews ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 text-xs text-zinc-300">
-              <p className="font-semibold text-white mb-1">{selectedNews.headline}</p>
-              <p>{selectedNews.content}</p>
-            </div>
-          ) : (
-            <EmptyState
-              title="Select a headline"
-              body="Click a market-intelligence item to keep the full context pinned beside your workspace."
-            />
-          )}
-        </aside>
       </div>
     </div>
   );

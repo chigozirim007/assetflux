@@ -5,14 +5,7 @@ import { useAppState } from '../context/AppStateContext';
 import AuthenticityMetrics from '../components/features/AuthenticityMetrics';
 import InvestmentSquads from '../components/features/InvestmentSquads';
 import LoyaltyBadge from '../components/features/LoyaltyBadge';
-
-const CATEGORY_LABELS = {
-  crypto: 'Crypto',
-  forex: 'Forex',
-  stocks: 'Stocks',
-  shares: 'Shares & ETFs',
-  'real-estate': 'Real Estate',
-};
+import SocialFeed, { CATEGORY_LABELS } from '../components/features/SocialFeed';
 
 function EmptyPanel({ title, body }) {
   return (
@@ -31,7 +24,7 @@ export default function MyProfilePage() {
   return (
     <div className="min-h-screen bg-[#05060f] text-white p-6">
       <div className="max-w-6xl mx-auto space-y-5">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-black">My Profile</h1>
             <p className="text-sm text-zinc-500">Your public identity, social graph, and publishing status.</p>
@@ -77,7 +70,7 @@ export default function MyProfilePage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
+        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-5">
           <div className="space-y-5">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-4">
               <h2 className="text-lg font-black">Social Graph</h2>
@@ -97,10 +90,7 @@ export default function MyProfilePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-3">
-              <h2 className="text-lg font-black">Posts</h2>
-              <EmptyPanel title="No posts published" body="Your market notes and portfolio updates will show here after you publish them." />
-            </div>
+            <SocialFeed mode="mine" title="Posts" />
           </div>
 
           <aside className="space-y-5">
