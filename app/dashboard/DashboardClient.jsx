@@ -138,11 +138,81 @@ function CategoryCommunity({ category }) {
   );
 }
 
+function DashboardSidebar({
+  displayName,
+  user,
+  tab,
+  onTabChange,
+  activeMeta,
+  watched,
+  prices,
+  followedUsers,
+  onNavigate,
+}) {
+  const selectTab = (id) => {
+    onTabChange(id);
+    onNavigate?.();
+  };
+
+  return (
+    <>
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
+        <div>
+          <p className="text-lg font-black">AssetFlux Terminal</p>
+          <p className="text-xs text-zinc-500">{displayName}</p>
+        </div>
+        <LoyaltyBadge joinDate={user.created_at} />
+        <VerificationGate verified={user.verified} />
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <Link onClick={onNavigate} href="/profile" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Profile</Link>
+          <Link onClick={onNavigate} href="/account-settings" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Settings</Link>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
+        <h3 className="text-sm font-bold">Navigation</h3>
+        <div className="flex flex-col gap-2">
+          {TABS.map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => selectTab(id)}
+              className={`text-left px-3 py-2 rounded-lg text-xs font-semibold ${
+                tab === id ? 'bg-violet-600 text-white' : 'bg-zinc-950 border border-zinc-800 text-zinc-400'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-2">
+        <h3 className="text-sm font-bold">{activeMeta ? `${activeMeta.label} Tickers` : 'Live Tickers'}</h3>
+        {watched.length ? watched.map(s => <PriceRow key={s} symbol={s} value={prices[s]} />) : (
+          <p className="text-xs text-zinc-500">Choose market interests in settings to build this watchlist.</p>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-xs">
+        <div className="flex items-center justify-between">
+          <span className="text-zinc-500">Mentors</span>
+          <span className="font-bold text-white">{followedUsers.length}</span>
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-zinc-500">Mentees</span>
+          <span className="font-bold text-white">0</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function DashboardClient() {
   const [tab, setTab] = useState('terminal');
   const [activeCategory, setActiveCategory] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('');
   const [selectedNews, setSelectedNews] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { prices } = usePrices();
   const {
@@ -194,48 +264,74 @@ export default function DashboardClient() {
 
   return (
     <div className="min-h-screen bg-[#05060f] text-white">
+      <div className="sticky top-0 z-50 border-b border-zinc-900 bg-[#05060f]/95 px-4 py-3 backdrop-blur xl:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black">AssetFlux Terminal</p>
+            <p className="truncate text-[11px] text-zinc-500">{displayName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open dashboard menu"
+            className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-950"
+          >
+            <span className="h-0.5 w-5 rounded bg-zinc-200" />
+            <span className="h-0.5 w-5 rounded bg-zinc-200" />
+            <span className="h-0.5 w-5 rounded bg-zinc-200" />
+          </button>
+        </div>
+      </div>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-[100] xl:hidden">
+          <button
+            type="button"
+            aria-label="Close dashboard menu"
+            onClick={() => setMenuOpen(false)}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          />
+          <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,360px)] flex-col overflow-y-auto border-l border-zinc-800 bg-[#080912] p-4 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-black">Menu</p>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-bold text-zinc-300"
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-4">
+              <DashboardSidebar
+                displayName={displayName}
+                user={user}
+                tab={tab}
+                onTabChange={setTab}
+                activeMeta={activeMeta}
+                watched={watched}
+                prices={prices}
+                followedUsers={followedUsers}
+                onNavigate={() => setMenuOpen(false)}
+              />
+            </div>
+          </aside>
+        </div>
+      )}
+
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] gap-6">
 
-        <aside className="space-y-4 xl:sticky xl:top-4 self-start">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
-            <div>
-              <p className="text-lg font-black">AssetFlux Terminal</p>
-              <p className="text-xs text-zinc-500">{displayName}</p>
-            </div>
-            <LoyaltyBadge joinDate={user.created_at} />
-            <VerificationGate verified={user.verified} />
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <Link href="/profile" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Profile</Link>
-              <Link href="/account-settings" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Settings</Link>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
-            <h3 className="text-sm font-bold">Navigation</h3>
-            <div className="flex flex-col gap-2">
-              {TABS.map(([id, label]) => (
-                <button key={id} onClick={() => setTab(id)} className={`text-left px-3 py-2 rounded-lg text-xs font-semibold ${tab === id ? 'bg-violet-600 text-white' : 'bg-zinc-950 border border-zinc-800 text-zinc-400'}`}>{label}</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-2">
-            <h3 className="text-sm font-bold">{activeMeta ? `${activeMeta.label} Tickers` : 'Live Tickers'}</h3>
-            {watched.length ? watched.map(s => <PriceRow key={s} symbol={s} value={prices[s]} />) : (
-              <p className="text-xs text-zinc-500">Choose market interests in settings to build this watchlist.</p>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-500">Mentors</span>
-              <span className="font-bold text-white">{followedUsers.length}</span>
-            </div>
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-zinc-500">Mentees</span>
-              <span className="font-bold text-white">0</span>
-            </div>
-          </div>
+        <aside className="hidden space-y-4 self-start xl:sticky xl:top-4 xl:block">
+          <DashboardSidebar
+            displayName={displayName}
+            user={user}
+            tab={tab}
+            onTabChange={setTab}
+            activeMeta={activeMeta}
+            watched={watched}
+            prices={prices}
+            followedUsers={followedUsers}
+          />
         </aside>
 
         <main className="min-w-0 space-y-5">
