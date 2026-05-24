@@ -280,14 +280,14 @@ export default function LandingPage() {
           <Link
             id="signin-btn"
             href="/signin"
-            className="text-zinc-300 border border-zinc-700 px-3 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold hover:border-violet-500 hover:text-violet-300 transition text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
+            className="hidden sm:flex text-zinc-300 border border-zinc-700 px-3 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold hover:border-violet-500 hover:text-violet-300 transition text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
           >
             Sign in
           </Link>
           <Link
             id="signup-btn"
             href="/signup"
-            className="bg-violet-600 text-white px-3 xs:px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:shadow-[0_0_35px_rgba(124,58,237,0.6)] hover:bg-violet-500 transition-all text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
+            className="hidden sm:flex bg-violet-600 text-white px-3 xs:px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:shadow-[0_0_35px_rgba(124,58,237,0.6)] hover:bg-violet-500 transition-all text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
           >
             Sign up
           </Link>
@@ -306,11 +306,11 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* â”€â”€ MOBILE MENU DRAWER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* — MOBILE MENU DRAWER —————————————————————————————————————————————————————————————— */}
       <div
         id="mobile-menu-drawer"
         className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#0b0d1f]/98 backdrop-blur-xl border-b border-violet-900/40 ${
-          menuOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+          menuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="flex flex-col px-6 py-4 max-w-7xl mx-auto">
@@ -324,6 +324,16 @@ export default function LandingPage() {
               {link.label}
             </Link>
           ))}
+          
+          {/* Mobile Auth Links */}
+          <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-zinc-800/60 sm:hidden pb-2">
+            <Link href="/signin" onClick={() => setMenuOpen(false)} className="py-2.5 text-center text-zinc-300 border border-zinc-700 rounded-full font-semibold hover:text-violet-300 hover:border-violet-500 transition">
+              Sign in
+            </Link>
+            <Link href="/signup" onClick={() => setMenuOpen(false)} className="py-2.5 text-center bg-violet-600 text-white rounded-full font-bold hover:bg-violet-500 transition shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+              Sign up
+            </Link>
+          </div>
         </div>
       </div>
 
