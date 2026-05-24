@@ -13,8 +13,8 @@ import { supabase } from '../lib/supabase';
  */
 const MARKET_ROWS = [
   { priceKey: 'BTC/USDT',  label: 'Bitcoin',       displayKey: 'BTC/USDT', prefix: 'BTC',  color: '#f59e0b', decimals: 2  },
-  { priceKey: 'ETH/USDT',  label: 'Ethereum',       displayKey: 'ETH/USDT', prefix: 'ETH',  color: '#818cf8', decimals: 2  },
-  { priceKey: 'SOL/USDT',  label: 'Solana',         displayKey: 'SOL/USDT', prefix: '$',  color: '#9945ff', decimals: 2  },
+  { priceKey: 'ETH/USDT',  label: 'Ethereum',      displayKey: 'ETH/USDT', prefix: 'ETH',  color: '#818cf8', decimals: 2  },
+  { priceKey: 'SOL/USDT',  label: 'Solana',        displayKey: 'SOL/USDT', prefix: '$',  color: '#9945ff', decimals: 2  },
   { priceKey: 'EUR/USDT',  label: 'Euro / Dollar',  displayKey: 'EUR/USD',  prefix: '',   color: '#34d399', decimals: 4  },
   { priceKey: 'GBP/USDT',  label: 'Cable',          displayKey: 'GBP/USD',  prefix: '',   color: '#60a5fa', decimals: 4  },
   { priceKey: 'AAPL',      label: 'Apple Inc.',     displayKey: 'AAPL.US',  prefix: '$',  color: '#a78bfa', decimals: 2  },
@@ -67,7 +67,7 @@ async function resolveLoginEmail(identifier) {
   return { email: data.email, profile: data };
 }
 
-/* â”€â”€ Animated grid background â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ―― Animated grid background ―――――――――――――――――――――――――――――――――――――――― */
 
 function GridCanvas() {
   const canvasRef = useRef(null);
@@ -83,6 +83,13 @@ function GridCanvas() {
     const draw = () => {
       const W = canvas.width  = canvas.offsetWidth;
       const H = canvas.height = canvas.offsetHeight;
+
+      // ADDED FIX: Skip drawing if canvas has 0 width/height (hidden on mobile)
+      if (W === 0 || H === 0) {
+        raf = requestAnimationFrame(draw);
+        return;
+      }
+
       ctx.clearRect(0, 0, W, H);
 
       const step = 48;
@@ -114,7 +121,7 @@ function GridCanvas() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
 }
 
-/* â”€â”€ Eye icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ―― Eye icon ―――――――――――――――――――――――――――――――――――――――――――――――――――――――― */
 function EyeIcon({ open }) {
   return open ? (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
@@ -130,7 +137,7 @@ function EyeIcon({ open }) {
   );
 }
 
-/* â”€â”€ Main Sign In Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ―― Main Sign In Component ―――――――――――――――――――――――――――――――――――――――――― */
 export default function SignInClient() {
   /* Real prices from global context - same WebSocket as every other page */
   const { prices, wsStatus } = usePrices();
@@ -231,7 +238,7 @@ export default function SignInClient() {
   return (
     <div className="min-h-screen bg-[#05060f] text-white flex overflow-hidden">
 
-      {/* â”€â”€ LEFT PANEL - live market feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ―― LEFT PANEL - live market feed ―――――――――――――――――――――――――――――――― */}
       <div className="hidden lg:flex flex-col flex-1 relative overflow-hidden border-r border-violet-900/20">
         <GridCanvas />
 
@@ -268,7 +275,7 @@ export default function SignInClient() {
             </p>
           </div>
 
-          {/* â”€â”€ Live market feed (real prices from context) â”€â”€ */}
+          {/* ―― Live market feed (real prices from context) ―― */}
           <div className="mt-10 flex-1 overflow-hidden">
             <p className="text-zinc-600 text-[10px] font-mono uppercase tracking-widest mb-3">Live Prices</p>
             <div className="space-y-2">
@@ -307,12 +314,12 @@ export default function SignInClient() {
           </div>
 
           <div className="mt-8">
-            <p className="text-zinc-700 text-xs">Â© 2026 AssetFlux Â· Real-time financial intelligence</p>
+            <p className="text-zinc-700 text-xs">© 2026 AssetFlux · Real-time financial intelligence</p>
           </div>
         </div>
       </div>
 
-      {/* â”€â”€ RIGHT PANEL - Sign In form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ―― RIGHT PANEL - Sign In form ―――――――――――――――――――――――――――――――――――――― */}
       <div className="flex-1 lg:max-w-[520px] flex items-center justify-center px-6 py-12 relative">
 
         <div className="lg:hidden pointer-events-none fixed inset-0 -z-10">
@@ -520,4 +527,3 @@ export default function SignInClient() {
     </div>
   );
 }
-
