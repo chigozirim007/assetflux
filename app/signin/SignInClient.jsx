@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePrices } from '../context/PriceContext';
 import { supabase } from '../lib/supabase';
@@ -68,7 +68,6 @@ async function resolveLoginEmail(identifier) {
 }
 
 /* â”€â”€ Animated grid background â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-import { useEffect, useRef } from 'react';
 
 function GridCanvas() {
   const canvasRef = useRef(null);
@@ -77,6 +76,7 @@ function GridCanvas() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     let raf;
     let t = 0;
 

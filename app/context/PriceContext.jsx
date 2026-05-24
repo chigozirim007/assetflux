@@ -52,8 +52,15 @@ export function usePrices() {
 }
 
 export function PriceProvider({ children }) {
-  const [prices, setPrices] = useState(loadInitialPrices);
+  const [prices, setPrices] = useState({});
   const [wsStatus, setWsStatus] = useState('connecting');
+
+  useEffect(() => {
+    const initial = loadInitialPrices();
+    if (Object.keys(initial).length > 0) {
+      setPrices(initial);
+    }
+  }, []);
 
   const wsRef = useRef(null);
   const reconnTimerRef = useRef(null);
