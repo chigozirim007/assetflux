@@ -19,7 +19,7 @@ const MARKET_ROUTE_LINKS = [
 const TICKER_CONFIG = [
   { key: 'BTC/USDT',  label: 'BTC/USDT', prefix: 'BTC' },
   { key: 'ETH/USDT',  label: 'ETH/USDT', prefix: 'ETH' },
-  { key: 'EUR/USDT',  label: 'EUR/USD',  prefix: '' },
+  { key: 'EURUSD=X',  label: 'EUR/USD',  prefix: '' },
   { key: 'AAPL',      label: 'AAPL.US',  prefix: '$' },
   { key: 'TSLA',      label: 'TSLA.US',  prefix: '$' },
   { key: 'SOL/USDT',  label: 'SOL/USDT', prefix: '$' },
@@ -29,7 +29,7 @@ const TICKER_CONFIG = [
 const MARKET_CARDS = [
   { key: 'BTC/USDT',  name: 'Bitcoin',       symbol: 'BTC/USDT',  prefix: 'BTC', color: '#f59e0b', badge: 'CRYPTO' },
   { key: 'AAPL',      name: 'Apple Inc.',     symbol: 'AAPL.US',   prefix: '$', color: '#818cf8', badge: 'STOCK'  },
-  { key: 'EUR/USDT',  name: 'Euro / Dollar',  symbol: 'EUR/USD',   prefix: '',  color: '#34d399', badge: 'FOREX'  },
+  { key: 'EURUSD=X',  name: 'Euro / Dollar',  symbol: 'EUR/USD',   prefix: '',  color: '#34d399', badge: 'FOREX'  },
   { key: 'TSLA',      name: 'Tesla Inc.',     symbol: 'TSLA.US',   prefix: '$', color: '#f43f5e', badge: 'STOCK'  },
 ];
 
@@ -49,7 +49,9 @@ function fmtChange(change) {
 
 // â”€â”€â”€ SparklineChart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SparklineChart({ id, history, color = '#818cf8', height = 64 }) {
-  if (!history || history.length < 2) {
+  const chartHistory = history?.length === 1 ? [history[0], history[0]] : history;
+  
+  if (!chartHistory || chartHistory.length < 2) {
     return (
       <div
         style={{ height }}
@@ -60,12 +62,12 @@ function SparklineChart({ id, history, color = '#818cf8', height = 64 }) {
     );
   }
 
-  const min   = Math.min(...history);
-  const max   = Math.max(...history);
+  const min   = Math.min(...chartHistory);
+  const max   = Math.max(...chartHistory);
   const range = max - min || Math.abs(min) * 0.001 || 1;
-  const n     = history.length;
+  const n     = chartHistory.length;
 
-  const pts = history.map((v, i) => {
+  const pts = chartHistory.map((v, i) => {
     const x = ((i / (n - 1)) * 100).toFixed(2);
     const y = (100 - ((v - min) / range) * 94 + 3).toFixed(2);
     return `${x},${y}`;
