@@ -45,4 +45,4 @@ AssetFlux is built with modern, cutting-edge web technologies to ensure optimal 
 
 - **Live Market Ticker:** A globally available, sticky top bar streaming live ticker data, ensuring you never miss a beat regardless of which page you are on.
 - **Context-Aware Routing:** The application intelligently distinguishes between guests and authenticated users, ensuring secure routes are protected and logged-in users are routed straight to their customized dashboard upon visiting the landing page.
-- **Modular Components:** The codebase relies on highly reusable, pure components (`MarketCard`, `SparklineChart`, `WsStatusBadge`) maintaining a clean, scalable structure.
+- **Modular Components:** The codebase relies on highly reusable, pure components (`MarketCard`, `SparklineChart`, `WsStatusBadge`) maintaining a clean, scalable and premium structure.
