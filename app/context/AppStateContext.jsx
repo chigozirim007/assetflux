@@ -16,6 +16,19 @@ const DEFAULT_POSTS = [];
 
 const AppStateContext = createContext(null);
 
+const DEFAULT_USER = {
+  id: null,
+  username: '',
+  name: '',
+  email: '',
+  phone: '',
+  firstName: '',
+  lastName: '',
+  created_at: '',
+  verified: false,
+  activityScore: 0,
+};
+
 function readCookie(name) {
   if (typeof document === 'undefined') return null;
   const entry = document.cookie
@@ -43,18 +56,27 @@ export function AppStateProvider({ children }) {
   const [locale, setLocale] = useState('en-US');
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
 
-  const [user, setUser] = useState({
-    id: null,
-    username: '',
-    name: '',
-    email: '',
-    phone: '',
-    firstName: '',
-    lastName: '',
-    created_at: '',
-    verified: false,
-    activityScore: 0,
-  });
+  const [user, setUser] = useState(DEFAULT_USER);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const resetSignedInState = () => {
+    setUser(DEFAULT_USER);
+    setSelectedCategories(DEFAULT_CATEGORIES);
+    setFollowedUsers([]);
+    setSubscribedCreators([]);
+    setPosts(DEFAULT_POSTS);
+    try {
+      localStorage.removeItem('assetflux_user');
+      localStorage.removeItem('assetflux_app_state_v1');
+      localStorage.removeItem('assetflux_interests');
+    } catch {
+      // ignore storage cleanup failures
+    }
+    if (typeof document !== 'undefined') {
+      document.cookie = 'assetflux_interests=; path=/; max-age=0; SameSite=Lax';
+    }
+  };
 
   useEffect(() => {
     try {
@@ -66,12 +88,6 @@ export function AppStateProvider({ children }) {
           setSelectedCategories(interests);
           hasSignupInterests = true;
         }
-      }
-
-      const rawUser = localStorage.getItem('assetflux_user');
-      if (rawUser) {
-        const cachedUser = JSON.parse(rawUser);
-        setUser(prev => ({ ...prev, ...cachedUser }));
       }
 
       const raw = localStorage.getItem('assetflux_app_state_v1');
@@ -87,7 +103,6 @@ export function AppStateProvider({ children }) {
       if (Array.isArray(parsed.posts)) setPosts(parsed.posts);
       if (parsed.locale) setLocale(parsed.locale);
       if (parsed.timezone) setTimezone(parsed.timezone);
-      if (parsed.user) setUser(prev => ({ ...prev, ...parsed.user }));
     } catch {
       // ignore bad cache
     }
@@ -96,10 +111,14 @@ export function AppStateProvider({ children }) {
   useEffect(() => {
     let active = true;
 
-    async function loadSessionProfile() {
-      const { data } = await supabase.auth.getUser();
-      const authUser = data?.user;
-      if (!active || !authUser) return;
+    async function applyAuthUser(authUser) {
+      if (!active) return;
+      if (!authUser) {
+        resetSignedInState();
+        setSession(null);
+        setAuthLoading(false);
+        return;
+      }
 
       const meta = authUser.user_metadata || {};
       const nextUser = {
@@ -114,6 +133,7 @@ export function AppStateProvider({ children }) {
       };
 
       setUser(prev => ({ ...prev, ...nextUser }));
+      setAuthLoading(false);
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -141,8 +161,42 @@ export function AppStateProvider({ children }) {
       }));
     }
 
+    async function loadSessionProfile() {
+      try {
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise(resolve => setTimeout(() => resolve({ data: { session: null } }), 4000)),
+        ]);
+        const { data: sessionData } = sessionResult;
+        if (!active) return;
+        setSession(sessionData?.session || null);
+        const authUser = sessionData?.session?.user || null;
+        applyAuthUser(authUser);
+      } catch {
+        if (!active) return;
+        resetSignedInState();
+        setSession(null);
+      } finally {
+        if (active) setAuthLoading(false);
+      }
+    }
+
+    let listener;
+    try {
+      const authListener = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        setSession(nextSession || null);
+        applyAuthUser(nextSession?.user || null);
+      });
+      listener = authListener.data;
+    } catch {
+      setAuthLoading(false);
+    }
+
     loadSessionProfile();
-    return () => { active = false; };
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -160,11 +214,19 @@ export function AppStateProvider({ children }) {
       user,
     };
     try {
-      localStorage.setItem('assetflux_app_state_v1', JSON.stringify(payload));
+      if (session?.user) {
+        localStorage.setItem('assetflux_app_state_v1', JSON.stringify(payload));
+      }
     } catch {
       // ignore persistence failures
     }
-  }, [selectedCategories, viewMode, feedMode, terminalMode, notifications, followedUsers, subscribedCreators, posts, locale, timezone, user]);
+  }, [selectedCategories, viewMode, feedMode, terminalMode, notifications, followedUsers, subscribedCreators, posts, locale, timezone, user, session]);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    resetSignedInState();
+  };
 
   const getAuthor = () => ({
     id: user.id || user.username || user.email || 'local-user',
@@ -195,6 +257,10 @@ export function AppStateProvider({ children }) {
     setTimezone,
     user,
     setUser,
+    session,
+    authLoading,
+    isAuthenticated: !!session?.user,
+    signOut,
     replaceSelectedCategories: (categories) => {
       setSelectedCategories(categories);
       persistInterests(categories);

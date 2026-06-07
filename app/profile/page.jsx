@@ -6,6 +6,7 @@ import AuthenticityMetrics from '../components/features/AuthenticityMetrics';
 import InvestmentSquads from '../components/features/InvestmentSquads';
 import LoyaltyBadge from '../components/features/LoyaltyBadge';
 import SocialFeed, { CATEGORY_LABELS } from '../components/features/SocialFeed';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 function EmptyPanel({ title, body }) {
   return (
@@ -16,7 +17,7 @@ function EmptyPanel({ title, body }) {
   );
 }
 
-export default function MyProfilePage() {
+function MyProfileContent() {
   const { user, selectedCategories, followedUsers } = useAppState();
   const displayName = user.name || user.username || 'AssetFlux User';
   const username = user.username || 'set-your-username';
@@ -100,5 +101,13 @@ export default function MyProfilePage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function MyProfilePage() {
+  return (
+    <ProtectedRoute>
+      <MyProfileContent />
+    </ProtectedRoute>
   );
 }

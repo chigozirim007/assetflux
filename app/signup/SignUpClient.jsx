@@ -183,10 +183,11 @@ export default function SignUpClient() {
         .eq('id', data.user.id);
     }
 
-    // Persist interests for the dashboard
-    localStorage.setItem('assetflux_interests', JSON.stringify(selectedCats));
-    document.cookie = `assetflux_interests=${encodeURIComponent(JSON.stringify(selectedCats))}; path=/; max-age=31536000; SameSite=Lax`;
-    localStorage.setItem('assetflux_user', JSON.stringify({ username: form.username, email: form.email, name: `${form.firstName} ${form.lastName}` }));
+    if (data.session) {
+      localStorage.setItem('assetflux_interests', JSON.stringify(selectedCats));
+      document.cookie = `assetflux_interests=${encodeURIComponent(JSON.stringify(selectedCats))}; path=/; max-age=31536000; SameSite=Lax`;
+      localStorage.setItem('assetflux_user', JSON.stringify({ username: form.username, email: form.email, name: `${form.firstName} ${form.lastName}` }));
+    }
     localStorage.setItem('assetflux_pending_confirmation', form.email);
     localStorage.setItem('isNewUser', 'true');
     

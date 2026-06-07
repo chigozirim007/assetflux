@@ -1,4 +1,6 @@
-export default function AdminPage() {
+import ProtectedRoute from '../components/ProtectedRoute';
+
+function AdminContent() {
   return (
     <div className="min-h-screen bg-[#05060f] text-white p-6">
       <div className="max-w-5xl mx-auto space-y-4">
@@ -13,6 +15,14 @@ export default function AdminPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <ProtectedRoute>
+      <AdminContent />
+    </ProtectedRoute>
   );
 }
 

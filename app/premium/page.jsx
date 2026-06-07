@@ -1,7 +1,8 @@
 import AuthenticityMetrics from '../components/features/AuthenticityMetrics';
 import EscrowTimeline from '../components/features/EscrowTimeline';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-export default function PremiumPage() {
+function PremiumContent() {
   return (
     <div className="min-h-screen bg-[#05060f] text-white p-6">
       <div className="max-w-5xl mx-auto space-y-4">
@@ -14,6 +15,14 @@ export default function PremiumPage() {
         <EscrowTimeline />
       </div>
     </div>
+  );
+}
+
+export default function PremiumPage() {
+  return (
+    <ProtectedRoute>
+      <PremiumContent />
+    </ProtectedRoute>
   );
 }
 

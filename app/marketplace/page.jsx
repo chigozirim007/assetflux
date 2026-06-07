@@ -1,7 +1,8 @@
 import SubscriptionPricingCard from '../components/features/SubscriptionPricingCard';
 import VerificationGate from '../components/features/VerificationGate';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-export default function MarketplacePage() {
+function MarketplaceContent() {
   return (
     <div className="min-h-screen bg-[#05060f] text-white p-6">
       <div className="max-w-4xl mx-auto space-y-4">
@@ -11,6 +12,14 @@ export default function MarketplacePage() {
         <SubscriptionPricingCard />
       </div>
     </div>
+  );
+}
+
+export default function MarketplacePage() {
+  return (
+    <ProtectedRoute>
+      <MarketplaceContent />
+    </ProtectedRoute>
   );
 }
 

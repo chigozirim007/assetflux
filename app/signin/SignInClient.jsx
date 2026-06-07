@@ -152,9 +152,14 @@ export default function SignInClient() {
   const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
   const [resending,  setResending]  = useState(false);
   const [focusField, setFocusField] = useState('');
+  const [nextPath, setNextPath] = useState('/dashboard');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const requestedNext = params.get('next');
+    if (requestedNext?.startsWith('/') && !requestedNext.startsWith('//')) {
+      setNextPath(requestedNext);
+    }
     if (params.get('confirmed') !== '1') return;
 
     setNotice('Email confirmed successfully. You can now sign in.');
@@ -209,7 +214,7 @@ export default function SignInClient() {
     localStorage.setItem('isNewUser', 'false');
     
     // Redirect to dashboard
-    window.location.href = '/dashboard';
+    window.location.href = nextPath;
   };
 
   const resendConfirmation = async () => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePrices } from '../context/PriceContext';
 import { useAppState } from '../context/AppStateContext';
 
@@ -148,6 +149,7 @@ function DashboardSidebar({
   prices,
   followedUsers,
   onNavigate,
+  onLogout,
 }) {
   const selectTab = (id) => {
     onTabChange(id);
@@ -166,6 +168,7 @@ function DashboardSidebar({
         <div className="grid grid-cols-2 gap-2 text-xs">
           <Link onClick={onNavigate} href="/profile" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Profile</Link>
           <Link onClick={onNavigate} href="/account-settings" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Settings</Link>
+          <button type="button" onClick={onLogout} className="col-span-2 rounded-lg border border-zinc-800 bg-zinc-100 px-3 py-2 font-bold text-zinc-950 hover:bg-white">Logout</button>
         </div>
       </div>
 
@@ -208,6 +211,7 @@ function DashboardSidebar({
 }
 
 export default function DashboardClient() {
+  const router = useRouter();
   const [tab, setTab] = useState('terminal');
   const [activeCategory, setActiveCategory] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('');
@@ -221,7 +225,13 @@ export default function DashboardClient() {
     followedUsers,
     locale,
     timezone,
+    signOut,
   } = useAppState();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/signin');
+  };
 
   const availableCategories = useMemo(
     () => selectedCategories.filter(category => CATEGORY_META[category]),
@@ -313,6 +323,7 @@ export default function DashboardClient() {
                 prices={prices}
                 followedUsers={followedUsers}
                 onNavigate={() => setMenuOpen(false)}
+                onLogout={handleLogout}
               />
             </div>
           </aside>
@@ -331,6 +342,7 @@ export default function DashboardClient() {
             watched={watched}
             prices={prices}
             followedUsers={followedUsers}
+            onLogout={handleLogout}
           />
         </aside>
 

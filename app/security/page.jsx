@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-export default function SecurityPage() {
+function SecurityContent() {
   const [enabled, setEnabled] = useState(false);
 
   return (
@@ -19,6 +20,14 @@ export default function SecurityPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SecurityPage() {
+  return (
+    <ProtectedRoute>
+      <SecurityContent />
+    </ProtectedRoute>
   );
 }
 

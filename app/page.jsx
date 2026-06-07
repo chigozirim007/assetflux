@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePrices } from './context/PriceContext';
-import { NAV_LINKS } from './components/Header';
+import { getVisibleNavLinks } from './components/Header';
+import { useAppState } from './context/AppStateContext';
+import { useRouter } from 'next/navigation';
 
 // â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const HISTORY_SIZE = 80;
@@ -208,8 +210,17 @@ function WsStatusBadge({ status }) {
 export default function LandingPage() {
   /* Shared context - no duplicate WebSocket */
   const { prices, wsStatus } = usePrices();
+  const { authLoading, isAuthenticated, signOut, user } = useAppState();
   const history = useLocalHistory(prices);
   const [menuOpen, setMenuOpen] = useState(false);
+  const visibleLinks = getVisibleNavLinks(isAuthenticated);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
     const onResize = () => { if (window.innerWidth >= 1024) setMenuOpen(false); };
@@ -265,7 +276,7 @@ export default function LandingPage() {
         </div>
 
         <div className="hidden lg:flex gap-4 xl:gap-8 font-medium text-zinc-400">
-          {NAV_LINKS.map(link => (
+          {visibleLinks.map(link => (
             <Link
               key={link.href}
               href={link.href}
@@ -277,20 +288,42 @@ export default function LandingPage() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <Link
-            id="signin-btn"
-            href="/signin"
-            className="hidden sm:flex text-zinc-300 border border-zinc-700 px-3 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold hover:border-violet-500 hover:text-violet-300 transition text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
-          >
-            Sign in
-          </Link>
-          <Link
-            id="signup-btn"
-            href="/signup"
-            className="hidden sm:flex bg-violet-600 text-white px-3 xs:px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:shadow-[0_0_35px_rgba(124,58,237,0.6)] hover:bg-violet-500 transition-all text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
-          >
-            Sign up
-          </Link>
+          {!authLoading && isAuthenticated ? (
+            <>
+              <Link
+                id="profile-btn"
+                href="/profile"
+                className="hidden sm:flex text-zinc-300 border border-zinc-700 px-3 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold hover:border-violet-500 hover:text-violet-300 transition text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
+              >
+                {user.username ? `@${user.username}` : 'Profile'}
+              </Link>
+              <button
+                id="logout-btn"
+                type="button"
+                onClick={signOut}
+                className="hidden sm:flex bg-zinc-100 text-zinc-950 px-3 xs:px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white transition-all text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
+              >
+                Logout
+              </button>
+            </>
+          ) : !authLoading ? (
+            <>
+              <Link
+                id="signin-btn"
+                href="/signin"
+                className="hidden sm:flex text-zinc-300 border border-zinc-700 px-3 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold hover:border-violet-500 hover:text-violet-300 transition text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
+              >
+                Sign in
+              </Link>
+              <Link
+                id="signup-btn"
+                href="/signup"
+                className="hidden sm:flex bg-violet-600 text-white px-3 xs:px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:shadow-[0_0_35px_rgba(124,58,237,0.6)] hover:bg-violet-500 transition-all text-[11px] xs:text-xs sm:text-sm whitespace-nowrap"
+              >
+                Sign up
+              </Link>
+            </>
+          ) : null}
 
           <button
             id="mobile-menu-toggle"
@@ -314,7 +347,7 @@ export default function LandingPage() {
         }`}
       >
         <div className="flex flex-col px-6 py-4 max-w-7xl mx-auto">
-          {NAV_LINKS.map(link => (
+          {visibleLinks.map(link => (
             <Link
               key={link.href}
               href={link.href}
@@ -326,14 +359,29 @@ export default function LandingPage() {
           ))}
           
           {/* Mobile Auth Links */}
-          <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-zinc-800/60 sm:hidden pb-2">
-            <Link href="/signin" onClick={() => setMenuOpen(false)} className="py-2.5 text-center text-zinc-300 border border-zinc-700 rounded-full font-semibold hover:text-violet-300 hover:border-violet-500 transition">
-              Sign in
-            </Link>
-            <Link href="/signup" onClick={() => setMenuOpen(false)} className="py-2.5 text-center bg-violet-600 text-white rounded-full font-bold hover:bg-violet-500 transition shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-              Sign up
-            </Link>
-          </div>
+          {!authLoading && (
+            <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-zinc-800/60 sm:hidden pb-2">
+              {isAuthenticated ? (
+                <>
+                  <Link href="/profile" onClick={() => setMenuOpen(false)} className="py-2.5 text-center text-zinc-300 border border-zinc-700 rounded-full font-semibold hover:text-violet-300 hover:border-violet-500 transition">
+                    Profile
+                  </Link>
+                  <button type="button" onClick={() => { setMenuOpen(false); signOut(); }} className="py-2.5 text-center bg-zinc-100 text-zinc-950 rounded-full font-bold hover:bg-white transition">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/signin" onClick={() => setMenuOpen(false)} className="py-2.5 text-center text-zinc-300 border border-zinc-700 rounded-full font-semibold hover:text-violet-300 hover:border-violet-500 transition">
+                    Sign in
+                  </Link>
+                  <Link href="/signup" onClick={() => setMenuOpen(false)} className="py-2.5 text-center bg-violet-600 text-white rounded-full font-bold hover:bg-violet-500 transition shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+                    Sign up
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { useAppState } from '../../context/AppStateContext';
 import ProofGate from '../../components/features/ProofGate';
 import AuthenticityMetrics from '../../components/features/AuthenticityMetrics';
 import LoyaltyBadge from '../../components/features/LoyaltyBadge';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 const MOCK_PORTFOLIO = [
   { asset: 'NVDA', appreciation: 24.2, entryDate: '2026-01-10' },
@@ -13,7 +14,7 @@ const MOCK_PORTFOLIO = [
   { asset: 'VNQ', appreciation: 9.4, entryDate: '2026-01-18' },
 ];
 
-export default function ProfilePage() {
+function ProfileContent() {
   const params = useParams();
   const username = String(params?.username || 'investor');
   const { isSubscribed, toggleSubscribe, user } = useAppState();
@@ -58,6 +59,14 @@ export default function ProfilePage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
   );
 }
 

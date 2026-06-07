@@ -1,4 +1,5 @@
 import DashboardClient from './DashboardClient';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export const metadata = {
   title: 'Terminal Dashboard - AssetFlux',
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  return (
+    <ProtectedRoute>
+      <DashboardClient />
+    </ProtectedRoute>
+  );
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import { useAppState } from '../context/AppStateContext';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 const CATEGORIES = [
   { id: 'crypto', label: 'Crypto', description: 'Digital assets and token markets' },
@@ -29,7 +30,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, autoComplet
   );
 }
 
-export default function AccountSettingsPage() {
+function AccountSettingsContent() {
   const { user, setUser, selectedCategories, replaceSelectedCategories } = useAppState();
   const [form, setForm] = useState({
     firstName: '',
@@ -226,5 +227,13 @@ export default function AccountSettingsPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AccountSettingsPage() {
+  return (
+    <ProtectedRoute>
+      <AccountSettingsContent />
+    </ProtectedRoute>
   );
 }
