@@ -39,18 +39,42 @@ create policy "Users can update own profile." on profiles for update using (auth
 -- TRIGGER for auto-creating profile on signup
 create or replace function public.handle_new_user() 
 returns trigger as $$
+declare
+  base_username text;
+  final_username text;
+  safe_interests jsonb;
 begin
+  -- Generate a fallback username from email if not provided in meta_data
+  base_username := coalesce(
+    new.raw_user_meta_data->>'username', 
+    split_part(new.email, '@', 1)
+  );
+  
+  -- If username from metadata is missing (e.g. OAuth), append a suffix to avoid collisions
+  if new.raw_user_meta_data->>'username' is null then
+    final_username := base_username || '_' || substr(md5(new.id::text), 1, 5);
+  else
+    final_username := new.raw_user_meta_data->>'username';
+  end if;
+
+  -- Safely handle interests array so jsonb_array_elements_text doesn't throw on null
+  if jsonb_typeof(new.raw_user_meta_data->'interests') = 'array' then
+    safe_interests := new.raw_user_meta_data->'interests';
+  else
+    safe_interests := '[]'::jsonb;
+  end if;
+
   insert into public.profiles (id, username, email, first_name, last_name, phone, two_fa_enabled, interests)
   values (
     new.id, 
-    new.raw_user_meta_data->>'username', 
+    final_username, 
     new.email,
     new.raw_user_meta_data->>'firstName', 
     new.raw_user_meta_data->>'lastName',
     new.raw_user_meta_data->>'phone',
-    coalesce((new.raw_user_meta_data->>'twoFA')::boolean, true),
+    coalesce((new.raw_user_meta_data->>'twoFA')::boolean, false),
     coalesce(
-      array(select jsonb_array_elements_text(new.raw_user_meta_data->'interests')),
+      (select array_agg(t.v) from jsonb_array_elements_text(safe_interests) as t(v)),
       array[]::text[]
     )
   );
