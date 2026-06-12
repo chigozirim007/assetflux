@@ -433,7 +433,7 @@ export default function DashboardClient() {
 
           {tab === 'portfolio' && (
             <div className="space-y-4">
-              <AuthenticityMetrics winRate={0} holdDays={0} risk="Pending" />
+              <AuthenticityMetrics winRate={0} holdDays={0} risk="Not assessed" />
               <TradeLockCard />
               <EmptyState
                 title="Portfolio (Coming Soon)"
