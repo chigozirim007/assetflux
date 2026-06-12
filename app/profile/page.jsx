@@ -95,7 +95,7 @@ function MyProfileContent() {
           </div>
 
           <aside className="space-y-5">
-            <AuthenticityMetrics winRate={0} holdDays={0} risk="Not assessed" />
+            <AuthenticityMetrics winRate={0} holdDays={0} risk="Pending" />
             <InvestmentSquads />
           </aside>
         </section>
