@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePrices } from '../context/PriceContext';
 import { supabase } from '../lib/supabase';
+import { useAppState } from '../context/AppStateContext';
 
 /*
  * Market rows shown in the left panel.
@@ -33,10 +34,12 @@ function looksLikeEmail(value) {
 }
 
 function getAuthRedirectUrl() {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/signin?confirmed=1`;
+  }
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (siteUrl) return `${siteUrl.replace(/\/$/, '')}/signin?confirmed=1`;
-  if (typeof window === 'undefined') return undefined;
-  return `${window.location.origin}/signin?confirmed=1`;
+  return undefined;
 }
 
 async function resolveLoginEmail(identifier) {
@@ -141,6 +144,7 @@ function EyeIcon({ open }) {
 export default function SignInClient() {
   /* Real prices from global context - same WebSocket as every other page */
   const { prices, wsStatus } = usePrices();
+  const { isAuthenticated, authLoading } = useAppState();
 
   const [identifier, setIdentifier] = useState('');
   const [password,   setPassword]   = useState('');
@@ -168,6 +172,12 @@ export default function SignInClient() {
     const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
     window.history.replaceState({}, '', cleanUrl);
   }, []);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      window.location.href = nextPath;
+    }
+  }, [authLoading, isAuthenticated, nextPath]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

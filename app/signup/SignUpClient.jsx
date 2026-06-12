@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
+import { useAppState } from '../context/AppStateContext';
 
 const CATEGORIES = [
   { id: 'crypto',      label: 'Crypto',      icon: 'BTC', color: '#f59e0b', desc: 'BTC, ETH & more' },
@@ -21,10 +22,12 @@ const NOTIF = [
 const STEPS = ['Personal Details', 'Your Interests', 'Account Security'];
 
 function getAuthRedirectUrl() {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/signin?confirmed=1`;
+  }
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (siteUrl) return `${siteUrl.replace(/\/$/, '')}/signin?confirmed=1`;
-  if (typeof window === 'undefined') return undefined;
-  return `${window.location.origin}/signin?confirmed=1`;
+  return undefined;
 }
 
 function PasswordStrength({ pw }) {
@@ -119,6 +122,13 @@ export default function SignUpClient() {
   const [errors, setErrors]   = useState({});
   const [loading, setLoading] = useState(false);
   const [done, setDone]       = useState(false);
+  const { isAuthenticated, authLoading } = useAppState();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      window.location.href = '/dashboard';
+    }
+  }, [authLoading, isAuthenticated]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const toggleCat  = id => setCats(p => ({ ...p, [id]: !p[id] }));
