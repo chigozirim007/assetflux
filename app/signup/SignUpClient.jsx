@@ -258,7 +258,7 @@ export default function SignUpClient() {
           </svg>
         </div>
         <h1 className="text-3xl font-extrabold text-white mb-3">Verify your email</h1>
-        <p className="text-zinc-400 text-sm mb-8">Welcome to AssetFlux, <span className="text-violet-400 font-semibold">@{form.username}</span>. We sent a 6-digit code to {form.email}. Enter it below to verify your account.</p>
+        <p className="text-zinc-400 text-sm mb-8">Welcome to AssetFlux, <span className="text-violet-400 font-semibold">@{form.username}</span>. We sent a verification code to {form.email}. Enter it below to verify your account.</p>
         
         <div className="bg-[#0d0f2a]/70 backdrop-blur-xl border border-violet-900/30 rounded-2xl p-6 shadow-[0_0_40px_rgba(109,40,217,0.08)] mb-6 text-left">
           <InputField 
@@ -266,7 +266,7 @@ export default function SignUpClient() {
             label="Verification Code" 
             value={otpCode} 
             onChange={e => setOtpCode(e.target.value)} 
-            placeholder="Enter 6-digit code" 
+            placeholder="Enter code" 
             error={errors.otp} 
           />
           <button 

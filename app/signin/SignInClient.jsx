@@ -409,49 +409,50 @@ export default function SignInClient() {
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
             {error && (
-              <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-sm">
+              <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-sm mb-4">
                 <div className="flex items-center gap-2.5">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
                   <span>{error}</span>
                 </div>
-                {unconfirmedEmail && (
-                  <div className="mt-4 pt-3 border-t border-red-500/20">
-                    <p className="text-xs text-red-300 mb-2 font-medium">Enter the 6-digit code sent to your email to verify:</p>
-                    <div className="flex items-center gap-2 mb-3">
-                      <input
-                        type="text"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
-                        placeholder="000000"
-                        className="w-full bg-zinc-900/60 border border-red-500/30 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-red-400 placeholder-zinc-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={verifyOtp}
-                        disabled={verifyingOtp}
-                        className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 px-4 py-2 rounded-lg text-xs font-bold text-red-200 transition-colors disabled:opacity-60 whitespace-nowrap"
-                      >
-                        {verifyingOtp ? 'Verifying...' : 'Verify'}
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={resendConfirmation}
-                      disabled={resending}
-                      className="w-full rounded-lg border border-red-400/30 bg-transparent px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-60 transition-colors"
-                    >
-                      {resending ? 'Sending...' : 'Resend confirmation code'}
-                    </button>
-                  </div>
-                )}
               </div>
             )}
 
             {notice && (
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 mb-4">
                 {notice}
+              </div>
+            )}
+
+            {unconfirmedEmail && (
+              <div className="rounded-xl bg-zinc-900/40 border border-violet-500/30 p-4 mb-4">
+                <p className="text-sm text-violet-300 mb-3 font-medium">Enter the verification code sent to your email to verify:</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="Enter code"
+                    className="w-full bg-zinc-900/60 border border-violet-500/30 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-violet-400 placeholder-zinc-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyOtp}
+                    disabled={verifyingOtp}
+                    className="bg-violet-600 hover:bg-violet-500 border border-violet-500 px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-colors disabled:opacity-60 whitespace-nowrap"
+                  >
+                    {verifyingOtp ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={resendConfirmation}
+                  disabled={resending}
+                  className="w-full rounded-lg border border-zinc-700/80 bg-zinc-900/50 hover:bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 disabled:opacity-60 transition-colors"
+                >
+                  {resending ? 'Sending...' : 'Resend confirmation code'}
+                </button>
               </div>
             )}
 
