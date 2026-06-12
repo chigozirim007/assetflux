@@ -161,6 +161,19 @@ export default function SignUpClient() {
     if (!validateStep()) return;
     setLoading(true);
     
+    // Check if username is already taken
+    const { data: existingUser } = await supabase
+      .from('profiles')
+      .select('username')
+      .ilike('username', form.username)
+      .maybeSingle();
+
+    if (existingUser) {
+      setErrors({ ...errors, global: 'That username is already taken. Please choose another.' });
+      setLoading(false);
+      return;
+    }
+
     const selectedCats = Object.keys(cats).filter(id => cats[id]);
 
     const { data, error } = await supabase.auth.signUp({
