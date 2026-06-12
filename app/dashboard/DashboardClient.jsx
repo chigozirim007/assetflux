@@ -175,17 +175,23 @@ function DashboardSidebar({
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
         <h3 className="text-sm font-bold">Navigation</h3>
         <div className="flex flex-col gap-2">
-          {TABS.map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => selectTab(id)}
-              className={`text-left px-3 py-2 rounded-lg text-xs font-semibold ${
-                tab === id ? 'bg-violet-600 text-white' : 'bg-zinc-950 border border-zinc-800 text-zinc-400'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          {TABS.map(([id, label]) => {
+            const isDisabled = id === 'portfolio';
+            const displayLabel = isDisabled ? 'Portfolio (Coming Soon)' : label;
+            return (
+              <button
+                key={id}
+                disabled={isDisabled}
+                onClick={() => !isDisabled && selectTab(id)}
+                className={`text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  isDisabled ? 'bg-zinc-950/30 border border-zinc-800/30 text-zinc-700 cursor-not-allowed' :
+                  tab === id ? 'bg-violet-600 text-white' : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                }`}
+              >
+                {displayLabel}
+              </button>
+            );
+          })}
         </div>
       </div>
 
