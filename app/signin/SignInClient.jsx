@@ -157,6 +157,8 @@ export default function SignInClient() {
   const [resending,  setResending]  = useState(false);
   const [focusField, setFocusField] = useState('');
   const [nextPath, setNextPath] = useState('/dashboard');
+  const [otpCode, setOtpCode] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -248,6 +250,31 @@ export default function SignInClient() {
     }
 
     setNotice(`Confirmation email sent to ${unconfirmedEmail}.`);
+  };
+
+  const verifyOtp = async () => {
+    if (!otpCode.trim()) {
+      setError('Please enter the 6-digit code.');
+      return;
+    }
+    setVerifyingOtp(true);
+    setError('');
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: unconfirmedEmail,
+      token: otpCode.trim(),
+      type: 'signup'
+    });
+
+    if (error) {
+      setVerifyingOtp(false);
+      setError(error.message);
+      return;
+    }
+
+    setVerifyingOtp(false);
+    // On success, the session is created and the `onAuthStateChange` listener in AppStateContext 
+    // will detect it and redirect the user via the `useEffect` above.
   };
 
   return (
@@ -390,14 +417,34 @@ export default function SignInClient() {
                   <span>{error}</span>
                 </div>
                 {unconfirmedEmail && (
-                  <button
-                    type="button"
-                    onClick={resendConfirmation}
-                    disabled={resending}
-                    className="mt-3 w-full rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-200 hover:bg-red-500/20 disabled:opacity-60"
-                  >
-                    {resending ? 'Sending confirmation...' : 'Resend confirmation email'}
-                  </button>
+                  <div className="mt-4 pt-3 border-t border-red-500/20">
+                    <p className="text-xs text-red-300 mb-2 font-medium">Enter the 6-digit code sent to your email to verify:</p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        placeholder="000000"
+                        className="w-full bg-zinc-900/60 border border-red-500/30 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-red-400 placeholder-zinc-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={verifyOtp}
+                        disabled={verifyingOtp}
+                        className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 px-4 py-2 rounded-lg text-xs font-bold text-red-200 transition-colors disabled:opacity-60 whitespace-nowrap"
+                      >
+                        {verifyingOtp ? 'Verifying...' : 'Verify'}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resendConfirmation}
+                      disabled={resending}
+                      className="w-full rounded-lg border border-red-400/30 bg-transparent px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-60 transition-colors"
+                    >
+                      {resending ? 'Sending...' : 'Resend confirmation code'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}

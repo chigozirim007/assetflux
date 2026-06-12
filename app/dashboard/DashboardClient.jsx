@@ -431,8 +431,8 @@ export default function DashboardClient() {
               <AuthenticityMetrics winRate={0} holdDays={0} risk="Not assessed" />
               <TradeLockCard />
               <EmptyState
-                title="No portfolio activity yet"
-                body="Your holdings, public proof, and subscriber-gated portfolio details will appear after you connect or publish them."
+                title="Portfolio (Coming Soon)"
+                body="Your holdings, public proof, and subscriber-gated portfolio details will appear here once this feature is launched."
               />
             </div>
           )}

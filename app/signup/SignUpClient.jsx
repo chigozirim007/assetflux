@@ -122,6 +122,8 @@ export default function SignUpClient() {
   const [errors, setErrors]   = useState({});
   const [loading, setLoading] = useState(false);
   const [done, setDone]       = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const { isAuthenticated, authLoading } = useAppState();
 
   useEffect(() => {
@@ -218,23 +220,69 @@ export default function SignUpClient() {
     setDone(true);
   };
 
+  const verifyOtp = async () => {
+    if (!otpCode.trim()) {
+      setErrors({ ...errors, otp: 'Please enter the 6-digit code.' });
+      return;
+    }
+    setVerifying(true);
+    setErrors({ ...errors, otp: '' });
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: form.email,
+      token: otpCode.trim(),
+      type: 'signup'
+    });
+
+    if (error) {
+      setVerifying(false);
+      setErrors({ ...errors, otp: error.message });
+      return;
+    }
+
+    setVerifying(false);
+    // On success, the session is created and the `onAuthStateChange` listener in AppStateContext 
+    // will detect it and redirect the user via the `useEffect` above.
+  };
+
   if (done) return (
     <div className="min-h-screen bg-[#05060f] flex items-center justify-center px-6">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-violet-700/20 rounded-full blur-[130px]" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[110px]" />
       </div>
-      <div className="text-center max-w-md">
+      <div className="text-center max-w-md w-full">
         <div className="w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
           <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
-        <h1 className="text-3xl font-extrabold text-white mb-3">Confirm your email</h1>
-        <p className="text-zinc-400 text-sm mb-8">Welcome to AssetFlux, <span className="text-violet-400 font-semibold">@{form.username}</span>. Check {form.email} and confirm your email before signing in.</p>
-        <Link href="/signin" className="inline-block bg-violet-600 hover:bg-violet-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-[0_0_25px_rgba(124,58,237,0.4)] hover:shadow-[0_0_40px_rgba(124,58,237,0.6)] transition-all duration-300 text-sm">
-          Sign in now &rarr;
-        </Link>
+        <h1 className="text-3xl font-extrabold text-white mb-3">Verify your email</h1>
+        <p className="text-zinc-400 text-sm mb-8">Welcome to AssetFlux, <span className="text-violet-400 font-semibold">@{form.username}</span>. We sent a 6-digit code to {form.email}. Enter it below to verify your account.</p>
+        
+        <div className="bg-[#0d0f2a]/70 backdrop-blur-xl border border-violet-900/30 rounded-2xl p-6 shadow-[0_0_40px_rgba(109,40,217,0.08)] mb-6 text-left">
+          <InputField 
+            id="otpCode" 
+            label="Verification Code" 
+            value={otpCode} 
+            onChange={e => setOtpCode(e.target.value)} 
+            placeholder="Enter 6-digit code" 
+            error={errors.otp} 
+          />
+          <button 
+            type="button" 
+            onClick={verifyOtp} 
+            disabled={verifying}
+            className="w-full mt-4 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl shadow-[0_0_25px_rgba(124,58,237,0.4)] transition-all duration-300 text-sm flex items-center justify-center gap-2"
+          >
+            {verifying ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : null}
+            {verifying ? 'Verifying...' : 'Verify & Sign In'}
+          </button>
+        </div>
+        
+        <p className="text-sm text-zinc-500">
+          Didn't get the code? Check your spam folder or <Link href="/signin" className="text-violet-400 font-semibold hover:text-violet-300">try signing in to resend</Link>.
+        </p>
       </div>
     </div>
   );
