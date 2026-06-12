@@ -176,8 +176,8 @@ function DashboardSidebar({
         <h3 className="text-sm font-bold">Navigation</h3>
         <div className="flex flex-col gap-2">
           {TABS.map(([id, label]) => {
-            const isDisabled = id === 'portfolio';
-            const displayLabel = isDisabled ? 'Portfolio (Coming Soon)' : label;
+            const isDisabled = id === 'portfolio' || id === 'ops';
+            const displayLabel = isDisabled ? `${label} (Coming Soon)` : label;
             return (
               <button
                 key={id}
