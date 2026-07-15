@@ -489,7 +489,7 @@ export default function SignInClient() {
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="text-xs font-semibold text-zinc-400 tracking-wide">Password</label>
-                <Link href="#" className="text-xs text-violet-400 hover:text-violet-300 transition font-medium">
+                <Link href="/forgot-password" className="text-xs text-violet-400 hover:text-violet-300 transition font-medium">
                   Forgot password?
                 </Link>
               </div>
