@@ -14,17 +14,22 @@ export const NAV_LINKS = [
   { label: 'Shares',      href: '/shares'        },
   { label: 'Real Estate', href: '/real-estate'   },
   { label: 'Marketplace', href: '/marketplace', requiresAuth: true },
+  { label: 'Admin Ops',   href: '/admin',       requiresAuth: true, requiresAdmin: true },
 ];
 
-export function getVisibleNavLinks(isAuthenticated) {
-  return NAV_LINKS.filter(link => isAuthenticated || !link.requiresAuth);
+export function getVisibleNavLinks(isAuthenticated, isAdmin = false) {
+  return NAV_LINKS.filter(link => {
+    if (link.requiresAdmin && !isAdmin) return false;
+    if (link.requiresAuth && !isAuthenticated) return false;
+    return true;
+  });
 }
 
 export default function Header({ active }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const { authLoading, isAuthenticated, signOut, user } = useAppState();
-  const visibleLinks = getVisibleNavLinks(isAuthenticated);
+  const { authLoading, isAuthenticated, isAdmin, signOut, user } = useAppState();
+  const visibleLinks = getVisibleNavLinks(isAuthenticated, isAdmin);
 
   const handleSignOut = async () => {
     await signOut();
@@ -51,6 +56,18 @@ export default function Header({ active }) {
         <div className="hidden lg:flex gap-4 xl:gap-8 font-medium text-zinc-400">
           {visibleLinks.map(link => {
             const isActive = active && link.href.includes(active);
+            if (link.requiresAdmin) {
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/50 bg-amber-500/10 text-amber-300 font-bold text-xs hover:bg-amber-500/20 transition self-center"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  {link.label}
+                </Link>
+              );
+            }
             return (
               <Link
                 key={link.href}
@@ -114,6 +131,19 @@ export default function Header({ active }) {
         <div className="flex flex-col px-6 py-4 max-w-7xl mx-auto">
           {visibleLinks.map(link => {
             const isActive = active && link.href.includes(active);
+            if (link.requiresAdmin) {
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="py-3 text-base font-bold text-amber-300 flex items-center gap-2 border-b border-zinc-800/60 transition"
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  {link.label}
+                </Link>
+              );
+            }
             return (
               <Link
                 key={link.href}

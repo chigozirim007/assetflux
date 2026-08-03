@@ -27,6 +27,7 @@ const DEFAULT_USER = {
   created_at: '',
   verified: false,
   activityScore: 0,
+  role: 'user',
 };
 
 function readCookie(name) {
@@ -137,7 +138,7 @@ export function AppStateProvider({ children }) {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, email, first_name, last_name, phone, interests, verified, created_at')
+        .select('username, email, first_name, last_name, phone, interests, verified, created_at, role')
         .eq('id', authUser.id)
         .maybeSingle();
 
@@ -156,6 +157,7 @@ export function AppStateProvider({ children }) {
         lastName: profile.last_name || prev.lastName,
         phone: profile.phone || prev.phone,
         verified: !!profile.verified,
+        role: profile.role || 'user',
         created_at: profile.created_at || prev.created_at,
         name: [profile.first_name, profile.last_name].filter(Boolean).join(' ') || prev.name,
       }));
@@ -260,6 +262,29 @@ export function AppStateProvider({ children }) {
     session,
     authLoading,
     isAuthenticated: !!session?.user,
+    isAdmin: user.role === 'admin',
+    refreshProfile: async () => {
+      if (!session?.user?.id) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, email, first_name, last_name, phone, interests, verified, created_at, role')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      if (profile) {
+        setUser(prev => ({
+          ...prev,
+          username: profile.username || prev.username,
+          email: profile.email || prev.email,
+          firstName: profile.first_name || prev.firstName,
+          lastName: profile.last_name || prev.lastName,
+          phone: profile.phone || prev.phone,
+          verified: !!profile.verified,
+          role: profile.role || 'user',
+          created_at: profile.created_at || prev.created_at,
+          name: [profile.first_name, profile.last_name].filter(Boolean).join(' ') || prev.name,
+        }));
+      }
+    },
     signOut,
     replaceSelectedCategories: (categories) => {
       setSelectedCategories(categories);

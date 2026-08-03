@@ -167,6 +167,12 @@ function DashboardSidebar({
         <div className="grid grid-cols-2 gap-2 text-xs">
           <Link onClick={onNavigate} href="/profile" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Profile</Link>
           <Link onClick={onNavigate} href="/account-settings" className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 hover:border-violet-500">Settings</Link>
+          {user?.role === 'admin' && (
+            <Link onClick={onNavigate} href="/admin" className="col-span-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 font-bold text-amber-300 hover:bg-amber-500/20 text-center flex items-center justify-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Admin Operations
+            </Link>
+          )}
           <button type="button" onClick={onLogout} className="col-span-2 rounded-lg border border-zinc-800 bg-zinc-100 px-3 py-2 font-bold text-zinc-950 hover:bg-white">Logout</button>
         </div>
       </div>
@@ -470,7 +476,9 @@ export default function DashboardClient() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                 <Link href="/marketplace" className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 hover:border-violet-500">Marketplace</Link>
                 <Link href="/premium" className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 hover:border-violet-500">Premium Dashboard</Link>
-                <Link href="/admin" className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 hover:border-violet-500">Admin Ops</Link>
+                {user?.role === 'admin' && (
+                  <Link href="/admin" className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 font-bold text-amber-300 hover:bg-amber-500/20">Admin Ops</Link>
+                )}
               </div>
             </div>
           )}

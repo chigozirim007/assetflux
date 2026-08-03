@@ -18,10 +18,12 @@ create table public.profiles (
   win_rate numeric,
   avg_hold_days numeric,
   risk_profile text,
+  role text default 'user',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table public.profiles add column if not exists email text;
+alter table public.profiles add column if not exists role text default 'user';
 create unique index if not exists profiles_email_unique on public.profiles (lower(email)) where email is not null;
 
 update public.profiles p
@@ -35,6 +37,9 @@ alter table public.profiles enable row level security;
 create policy "Public profiles are viewable by everyone." on profiles for select using (true);
 create policy "Users can insert their own profile." on profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile." on profiles for update using (auth.uid() = id);
+create policy "Admins can update any profile." on profiles for update using (
+  exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+);
 
 -- TRIGGER for auto-creating profile on signup
 create or replace function public.handle_new_user() 

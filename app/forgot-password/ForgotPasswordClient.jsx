@@ -12,11 +12,13 @@ export default function ForgotPasswordClient() {
   const [focusField, setFocusField] = useState('');
 
   function getRedirectUrl() {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (siteUrl) {
+      return `${siteUrl.replace(/\/$/, '')}/update-password`;
+    }
     if (typeof window !== 'undefined') {
       return `${window.location.origin}/update-password`;
     }
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    if (siteUrl) return `${siteUrl.replace(/\/$/, '')}/update-password`;
     return undefined;
   }
 
