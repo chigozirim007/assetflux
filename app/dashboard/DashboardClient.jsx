@@ -402,8 +402,15 @@ export default function DashboardClient() {
                   </div>
                 </div>
                 <span className="px-2.5 py-1 rounded-lg bg-violet-600/30 border border-violet-500/50 text-violet-200 font-mono text-xs font-bold">
-                  {prices['BTC/USDT']?.price ? `$${prices['BTC/USDT'].price.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '$62,740.00'}
+                  {prices['BTC/USDT']?.price
+                    ? `$${prices['BTC/USDT'].price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                    : <span className="inline-block w-16 h-4 bg-zinc-700/60 rounded animate-pulse" />}
                 </span>
+                {prices['BTC/USDT']?.change != null && (
+                  <span className={`ml-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${prices['BTC/USDT'].change >= 0 ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'}`}>
+                    {prices['BTC/USDT'].change >= 0 ? '+' : ''}{prices['BTC/USDT'].change.toFixed(2)}%
+                  </span>
+                )}
               </div>
 
               <div className="h-[280px] p-2">

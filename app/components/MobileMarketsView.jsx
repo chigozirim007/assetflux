@@ -77,20 +77,15 @@ export default function MobileMarketsView() {
             const ctxKey = inst.badge === 'CRYPTO' ? inst.displaySymbol : inst.symbol;
             const liveData = prices[ctxKey] || {};
             const livePrice = liveData.price != null ? liveData.price : null;
-            const liveChange = liveData.change != null ? liveData.change : 0.45;
-            const isUp = liveChange >= 0;
+            const liveChange = liveData.change != null ? liveData.change : null;
+            const isUp = (liveChange ?? 0) >= 0;
 
-            // Format price display
-            let formattedPrice = '-';
+            // Format price display — no hardcoded fallbacks
+            let formattedPrice = null;
             if (livePrice != null) {
               formattedPrice = livePrice > 999
                 ? `$${livePrice.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
                 : `$${livePrice.toFixed(2)}`;
-            } else {
-              formattedPrice = inst.symbol === 'BTCUSDT' ? '$62,740.00' :
-                               inst.symbol === 'SOLUSDT' ? '$25.00' :
-                               inst.symbol === 'BNBUSDT' ? '$48.65' :
-                               inst.symbol === 'ETHUSDT' ? '$42.50' : '$5.00';
             }
 
             return (
@@ -121,14 +116,20 @@ export default function MobileMarketsView() {
                 {/* Right: Price & Change Badge + Chevron */}
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="text-right">
-                    <p className="font-mono font-bold text-sm text-white">{formattedPrice}</p>
-                    <span
-                      className={`inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        isUp ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
-                      }`}
-                    >
-                      {isUp ? '+' : ''}{Number(liveChange).toFixed(2)}%
-                    </span>
+                    <p className="font-mono font-bold text-sm text-white">
+                      {formattedPrice ?? <span className="inline-block w-14 h-4 bg-zinc-700/50 rounded animate-pulse" />}
+                    </p>
+                    {liveChange != null ? (
+                      <span
+                        className={`inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          isUp ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                        }`}
+                      >
+                        {isUp ? '+' : ''}{liveChange.toFixed(2)}%
+                      </span>
+                    ) : (
+                      <span className="inline-block mt-0.5 w-10 h-3 bg-zinc-700/50 rounded animate-pulse" />
+                    )}
                   </div>
                   <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

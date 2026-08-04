@@ -86,10 +86,10 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
         </div>
         <div className="text-right flex-shrink-0">
           <p ref={priceRef} className="price-num text-sm sm:text-base font-bold" style={{ color }}>
-            {mounted ? fmtPrice(displayPrice, decimalPlaces) : '-'}
+            {fmtPrice(displayPrice, decimalPlaces)}
           </p>
           <p className={`font-bold text-[10px] sm:text-[11px] mt-0.5 ${displayUp ? 'text-emerald-400' : 'text-red-400'}`}>
-            {mounted ? fmtChange(displayChange) : '-'} {displayUp ? '^' : 'v'}
+            {fmtChange(displayChange)} {displayUp ? '^' : 'v'}
           </p>
         </div>
       </div>

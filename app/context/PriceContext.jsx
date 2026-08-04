@@ -16,49 +16,52 @@ const SEED = {};
 
 const LS_KEY = 'af_prices_v3';
 
-/** Read last-known prices from localStorage, fall back to empty */
+/** Read last-known prices from localStorage only if cached less than 60 seconds ago */
 function loadInitialPrices() {
   if (typeof window === 'undefined') return {};
   try {
-    const v3 = localStorage.getItem('af_prices_v3');
-    if (v3) return JSON.parse(v3);
-
-    // Fallback to previous cache keys to restore the user's last live prices
-    const v2 = localStorage.getItem('af_prices_v2');
-    if (v2) return JSON.parse(v2);
-
-    const v1 = localStorage.getItem('af_prices');
-    if (v1) {
-      const parsed = JSON.parse(v1);
-      // Strip out the old hardcoded seeds (150, 100, etc) so they don't return
-      const migrated = {};
-      for (const [k, v] of Object.entries(parsed)) {
-        if (v.price !== 150 && v.price !== 100 && v.price !== 64000) {
-          migrated[k] = v;
-        }
+    const raw = localStorage.getItem('af_prices_v4');
+    if (raw) {
+      const { data, timestamp } = JSON.parse(raw);
+      // Only return cache if it's less than 60 seconds old
+      if (timestamp && (Date.now() - timestamp < 60000)) {
+        return data || {};
       }
-      return migrated;
     }
+    // Wipe stale cache keys
+    localStorage.removeItem('af_prices_v3');
+    localStorage.removeItem('af_prices_v2');
+    localStorage.removeItem('af_prices');
     return {};
   } catch {
     return {};
   }
 }
 
-const PriceContext = createContext({ prices: {}, wsStatus: 'connecting' });
+const PriceContext = createContext({ prices: {}, wsStatus: 'connecting', injectPrices: () => {} });
 
 export function usePrices() {
   return useContext(PriceContext);
 }
 
-export function PriceProvider({ children }) {
-  const [prices, setPrices] = useState({});
+export function PriceProvider({ children, initialPrices }) {
+  const [prices, setPrices] = useState(() => {
+    // Server-provided prices are available immediately (no loading state)
+    if (initialPrices && Object.keys(initialPrices).length > 0) {
+      return initialPrices;
+    }
+    return {};
+  });
   const [wsStatus, setWsStatus] = useState('connecting');
 
   useEffect(() => {
-    const initial = loadInitialPrices();
-    if (Object.keys(initial).length > 0) {
-      setPrices(initial);
+    // Merge localStorage cache on mount (only if no server-provided prices)
+    const cached = loadInitialPrices();
+    if (Object.keys(cached).length > 0) {
+      setPrices(prev => {
+        if (Object.keys(prev).length === 0) return cached;
+        return { ...cached, ...prev }; // Server prices take priority
+      });
     }
   }, []);
 
@@ -73,8 +76,9 @@ export function PriceProvider({ children }) {
     if (Object.keys(batch).length) {
       setPrices(prev => {
         const next = { ...prev, ...batch };
-        // Persist to localStorage so offline / refresh shows last real price
-        try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+        try {
+          localStorage.setItem('af_prices_v4', JSON.stringify({ data: next, timestamp: Date.now() }));
+        } catch { /* ignore */ }
         return next;
       });
       pendingRef.current = {};
@@ -166,8 +170,24 @@ export function PriceProvider({ children }) {
     return () => clearInterval(id);
   }, [pollStocks]);
 
+  const injectPrices = useCallback((newPrices) => {
+    if (!newPrices || Object.keys(newPrices).length === 0) return;
+    setPrices(prev => {
+      // Only inject if we don't already have live data for these keys
+      const merged = { ...prev };
+      let updated = false;
+      for (const [key, val] of Object.entries(newPrices)) {
+        if (!merged[key]) {
+          merged[key] = val;
+          updated = true;
+        }
+      }
+      return updated ? merged : prev;
+    });
+  }, []);
+
   return (
-    <PriceContext.Provider value={{ prices, wsStatus }}>
+    <PriceContext.Provider value={{ prices, wsStatus, injectPrices }}>
       {children}
     </PriceContext.Provider>
   );
