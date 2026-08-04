@@ -87,7 +87,7 @@ export function PriceProvider({ children }) {
     if (!rafRef.current) rafRef.current = requestAnimationFrame(flushPrices);
   }, [flushPrices]);
 
-  /* â”€â”€ Binance WebSocket (crypto + EUR/GBP proxy) â”€â”€ */
+  /* ── Binance WebSocket (crypto + EUR/GBP proxy) ── */
   const connectWS = useCallback(() => {
     clearTimeout(reconnTimerRef.current);
     try {
@@ -115,16 +115,40 @@ export function PriceProvider({ children }) {
     }
   }, [queuePrice]);
 
+  /* ── Fetch live crypto prices directly from Binance REST API as reliable instant fallback ── */
+  const fetchCryptoREST = useCallback(async () => {
+    try {
+      const symbols = CRYPTO.map(c => `"${c.symbol}"`).join(',');
+      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=[${encodeURIComponent(symbols)}]`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          const key = STREAM_KEY_MAP[item.symbol.toLowerCase()];
+          if (key && item.lastPrice) {
+            queuePrice(key, {
+              price: parseFloat(item.lastPrice),
+              change: parseFloat(item.priceChangePercent),
+            });
+          }
+        });
+      }
+    } catch { /* ignore */ }
+  }, [queuePrice]);
+
   useEffect(() => {
+    fetchCryptoREST();
     connectWS();
+    const intervalId = setInterval(fetchCryptoREST, 5000);
     return () => {
       clearTimeout(reconnTimerRef.current);
       cancelAnimationFrame(rafRef.current);
+      clearInterval(intervalId);
       wsRef.current?.close();
     };
-  }, [connectWS]);
+  }, [connectWS, fetchCryptoREST]);
 
-  /* â”€â”€ Poll Yahoo Finance for all stocks every 3 seconds â”€â”€ */
+  /* ── Poll Yahoo Finance for all stocks every 5 seconds ── */
   const pollStocks = useCallback(async () => {
     try {
       const res = await fetch('/api/prices');

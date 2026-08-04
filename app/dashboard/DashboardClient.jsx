@@ -25,6 +25,11 @@ import RealEstateModule from '../components/modules/RealEstateModule';
 
 import LiveNewsSidebar from '../components/LiveNewsSidebar';
 import SocialFeed from '../components/features/SocialFeed';
+import MobileBottomNav from '../components/MobileBottomNav';
+import MobileMarketsView from '../components/MobileMarketsView';
+import MobileWatchlist from '../components/MobileWatchlist';
+import MobileChartOverlay from '../components/MobileChartOverlay';
+import { CRYPTO } from '../constants/instruments';
 
 const CATEGORY_META = {
   crypto: {
@@ -224,10 +229,13 @@ function DashboardSidebar({
 export default function DashboardClient() {
   const router = useRouter();
   const [tab, setTab] = useState('terminal');
+  const [mobileTab, setMobileTab] = useState('dashboard');
   const [activeCategory, setActiveCategory] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('');
   const [selectedNews, setSelectedNews] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [dashboardChartInstrument, setDashboardChartInstrument] = useState(null);
 
   const { prices } = usePrices();
   const {
@@ -285,25 +293,57 @@ export default function DashboardClient() {
 
   return (
     <div className="min-h-screen bg-[#05060f] text-white">
-      <div className="sticky top-0 z-50 border-b border-zinc-900 bg-[#05060f]/95 px-4 py-3 backdrop-blur xl:hidden">
+      {/* Mobile Top Header (Clean Single Header) */}
+      <div className="sticky top-0 z-40 border-b border-zinc-900 bg-[#05060f]/95 px-4 py-3 backdrop-blur xl:hidden">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-black">AssetFlux Terminal</p>
             <p className="truncate text-[11px] text-zinc-500">{displayName}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open dashboard menu"
-            className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-950"
-          >
-            <span className="h-0.5 w-5 rounded bg-zinc-200" />
-            <span className="h-0.5 w-5 rounded bg-zinc-200" />
-            <span className="h-0.5 w-5 rounded bg-zinc-200" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="flex h-9 w-9 flex-col items-center justify-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950"
+            >
+              <span className="h-0.5 w-4 rounded bg-zinc-200" />
+              <span className="h-0.5 w-4 rounded bg-zinc-200" />
+              <span className="h-0.5 w-4 rounded bg-zinc-200" />
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile Search Modal */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm p-4 xl:hidden flex flex-col justify-start pt-16">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-white">Search Tickers & Markets</p>
+              <button onClick={() => setSearchOpen(false)} className="text-xs text-zinc-400">Close</button>
+            </div>
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search BTC, ETH, SOL, AAPL..."
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-white outline-none focus:border-violet-500"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Navigation Drawer */}
       {menuOpen && (
         <div className="fixed inset-0 z-[100] xl:hidden">
           <button
@@ -341,9 +381,68 @@ export default function DashboardClient() {
         </div>
       )}
 
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] gap-6">
+      {/* Mobile Redesign Main Container (Matching Screenshots 1, 2, 3) */}
+      <div className="xl:hidden max-w-7xl mx-auto px-4 py-4 space-y-4 pb-24">
+        {mobileTab === 'dashboard' && (
+          <div className="space-y-5">
+            {/* Featured Candlestick Chart Card — Clickable */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setDashboardChartInstrument(CRYPTO[0])}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setDashboardChartInstrument(CRYPTO[0]); }}
+              className="w-full rounded-2xl border border-zinc-800 bg-[#0d0f1e] overflow-hidden space-y-2 hover:border-violet-600/60 active:scale-[0.99] transition-all duration-150 cursor-pointer text-left"
+            >
+              <div className="p-4 flex items-center justify-between border-b border-zinc-800/60">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div>
+                    <h2 className="text-sm font-black text-white">Bitcoin / TetherUS</h2>
+                    <p className="text-[10px] font-mono text-zinc-500">BTC/USDT</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-violet-600/30 border border-violet-500/50 text-violet-200 font-mono text-xs font-bold">
+                  {prices['BTC/USDT']?.price ? `$${prices['BTC/USDT'].price.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '$62,740.00'}
+                </span>
+              </div>
 
-        <aside className="hidden space-y-4 self-start xl:sticky xl:top-4 xl:block">
+              <div className="h-[280px] p-2">
+                <CryptoModule dense />
+              </div>
+
+              <div className="px-4 py-3 border-t border-zinc-800/60 flex items-center justify-between text-xs text-zinc-400">
+                <span className="flex items-center gap-1 font-semibold text-zinc-300">
+                  Tap to expand chart
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                </span>
+                <span className="font-mono text-[11px] text-zinc-500">{new Date().toLocaleTimeString()} UTC</span>
+              </div>
+            </div>
+
+            {/* Horizontal Watchlist Section (Matching Screenshot 1) */}
+            <MobileWatchlist />
+          </div>
+        )}
+
+        {mobileTab === 'markets' && (
+          <MobileMarketsView />
+        )}
+
+        {mobileTab === 'social' && (
+          <SocialFeed category="crypto" title="Market Social Feed" />
+        )}
+        {/* Dashboard Chart Overlay */}
+        {dashboardChartInstrument && (
+          <MobileChartOverlay
+            instrument={dashboardChartInstrument}
+            onClose={() => setDashboardChartInstrument(null)}
+          />
+        )}
+      </div>
+
+      {/* Desktop Main Container */}
+      <div className="hidden xl:grid max-w-[1500px] mx-auto px-4 sm:px-6 py-6 grid-cols-[280px_minmax(0,1fr)] gap-6">
+        <aside className="space-y-4 self-start sticky top-4">
           <DashboardSidebar
             displayName={displayName}
             user={user}
@@ -484,6 +583,9 @@ export default function DashboardClient() {
           )}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (Fixed at bottom for mobile screens) */}
+      <MobileBottomNav activeTab={mobileTab} onTabSelect={setMobileTab} />
     </div>
   );
 }

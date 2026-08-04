@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, SESSION_EXPIRY_SECONDS } from '../lib/supabase';
 
 const DEFAULT_CATEGORIES = [];
 
@@ -12,7 +12,44 @@ const DEFAULT_NOTIFICATIONS = {
   webPush: false,
 };
 
-const DEFAULT_POSTS = [];
+const DEFAULT_POSTS = [
+  {
+    id: 'sample-1',
+    category: 'crypto',
+    content: 'Bullish on BTC above 63k. Retracement likely first before testing 68k resistance. #BTC #Crypto',
+    author: { id: 'dan-1', name: 'CryptoDan', username: 'cryptodan' },
+    likes: ['user-1', 'user-2'],
+    comments: [],
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+  },
+  {
+    id: 'sample-2',
+    category: 'crypto',
+    content: 'Ethereum holding strong support at $3,400. DeFi activity surging across Layer 2s. #ETH #DeFi',
+    author: { id: 'alex-2', name: 'Alex Trader', username: 'alextrader' },
+    likes: ['user-1'],
+    comments: [],
+    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+  },
+  {
+    id: 'sample-3',
+    category: 'stocks',
+    content: 'NVDA earnings expectations are high. Watching semiconductor momentum closely. #Stocks #Tech',
+    author: { id: 'sarah-3', name: 'Sarah Markets', username: 'sarah_mkt' },
+    likes: ['user-3'],
+    comments: [],
+    createdAt: new Date(Date.now() - 1000 * 60 * 320).toISOString(),
+  },
+  {
+    id: 'sample-4',
+    category: 'forex',
+    content: 'EUR/USD consolidating near 1.0850 ahead of upcoming ECB rate commentary. #Forex #EURUSD',
+    author: { id: 'fx-mentor', name: 'FX Mentor', username: 'fxmentor' },
+    likes: [],
+    comments: [],
+    createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+  },
+];
 
 const AppStateContext = createContext(null);
 
@@ -67,15 +104,44 @@ export function AppStateProvider({ children }) {
     setFollowedUsers([]);
     setSubscribedCreators([]);
     setPosts(DEFAULT_POSTS);
+
+    // Thoroughly wipe all stored user data, auth tokens, and cached state
     try {
-      localStorage.removeItem('assetflux_user');
-      localStorage.removeItem('assetflux_app_state_v1');
-      localStorage.removeItem('assetflux_interests');
+      if (typeof window !== 'undefined') {
+        // Clear specific app storage items
+        localStorage.removeItem('assetflux_user');
+        localStorage.removeItem('assetflux_app_state_v1');
+        localStorage.removeItem('assetflux_interests');
+        localStorage.removeItem('af_prices_v3');
+
+        // Clear all Supabase auth tokens & assetflux keys from localStorage
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.startsWith('assetflux') || key.startsWith('af_'))) {
+            localStorage.removeItem(key);
+          }
+        }
+
+        // Clear sessionStorage
+        sessionStorage.clear();
+      }
     } catch {
       // ignore storage cleanup failures
     }
+
+    // Expire and clear all cookies
     if (typeof document !== 'undefined') {
-      document.cookie = 'assetflux_interests=; path=/; max-age=0; SameSite=Lax';
+      try {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i];
+          const eqPos = cookie.indexOf('=');
+          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+        }
+      } catch {
+        // ignore cookie cleanup failures
+      }
     }
   };
 
@@ -163,6 +229,19 @@ export function AppStateProvider({ children }) {
       }));
     }
 
+    function isSessionExpired(session) {
+      if (!session) return true;
+      // Check token expiry from the JWT 'exp' claim
+      const expiresAt = session.expires_at; // Unix timestamp in seconds
+      if (expiresAt && Date.now() / 1000 > expiresAt) return true;
+      // Also enforce our own max session age from user creation/last sign-in
+      const issuedAt = session.token?.iat || (session.user?.last_sign_in_at
+        ? new Date(session.user.last_sign_in_at).getTime() / 1000
+        : null);
+      if (issuedAt && (Date.now() / 1000 - issuedAt) > SESSION_EXPIRY_SECONDS) return true;
+      return false;
+    }
+
     async function loadSessionProfile() {
       try {
         const sessionResult = await Promise.race([
@@ -171,8 +250,21 @@ export function AppStateProvider({ children }) {
         ]);
         const { data: sessionData } = sessionResult;
         if (!active) return;
-        setSession(sessionData?.session || null);
-        const authUser = sessionData?.session?.user || null;
+
+        const currentSession = sessionData?.session || null;
+
+        // Force sign-out if the session is stale (older than SESSION_EXPIRY_SECONDS)
+        if (currentSession && isSessionExpired(currentSession)) {
+          console.info('Session expired — signing out automatically.');
+          await supabase.auth.signOut();
+          resetSignedInState();
+          setSession(null);
+          setAuthLoading(false);
+          return;
+        }
+
+        setSession(currentSession);
+        const authUser = currentSession?.user || null;
         applyAuthUser(authUser);
       } catch {
         if (!active) return;
