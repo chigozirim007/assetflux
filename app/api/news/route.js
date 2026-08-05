@@ -70,47 +70,83 @@ function parseRss(xml) {
   return items;
 }
 
+/* ── In-memory cache: Google News RSS is only hit once every 60 seconds
+      per unique category combination, regardless of user count ── */
+const newsCache = new Map(); // key: sorted categories string, value: { data, timestamp }
+const NEWS_CACHE_TTL_MS = 60000; // 60 seconds
+const newsFetchInFlight = new Map(); // dedup concurrent requests
+
+const FALLBACK_NEWS = [
+  {
+    id: 'fallback-1',
+    headline: "Global Markets Steady Amid Policy Shifts",
+    source: "AssetFlux Intel",
+    timestamp: new Date().toISOString(),
+    category: "global",
+    content: "Terminal is resyncing live feeds. Markets are currently showing moderate volatility as investors await upcoming economic data points."
+  },
+  {
+    id: 'fallback-2',
+    headline: "Crypto Sentiment Remains Neutral in Quiet Session",
+    source: "AssetFlux Intel",
+    timestamp: new Date().toISOString(),
+    category: "crypto",
+    content: "On-chain data indicates steady accumulation despite a lack of major price catalysts in the last hour."
+  }
+];
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const catsParam = searchParams.get('categories');
     const userCats = catsParam ? catsParam.split(',') : ['global'];
+    const cacheKey = [...userCats].sort().join(',');
 
-    // Combine all category keywords into one search for maximum speed
-    const unifiedQuery = userCats
-      .map(c => CATEGORY_MAP[c] || CATEGORY_MAP.global)
-      .join(' OR ');
+    // Serve from cache if fresh
+    const cached = newsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < NEWS_CACHE_TTL_MS) {
+      return NextResponse.json(cached.data);
+    }
 
-    const xml = await fetchRss(unifiedQuery);
-    const news = parseRss(xml);
+    // Dedup: if a fetch for this key is already in flight, wait for it
+    if (!newsFetchInFlight.has(cacheKey)) {
+      const fetchPromise = (async () => {
+        const unifiedQuery = userCats
+          .map(c => CATEGORY_MAP[c] || CATEGORY_MAP.global)
+          .join(' OR ');
 
-    if (news.length === 0) throw new Error('No items parsed');
+        const xml = await fetchRss(unifiedQuery);
+        const news = parseRss(xml);
 
-    // Filter to ensure we mostly show what the user wants
-    const filteredNews = news.filter(n => userCats.includes(n.category) || n.category === 'global');
+        if (news.length === 0) throw new Error('No items parsed');
 
-    return NextResponse.json(filteredNews.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+        const filteredNews = news
+          .filter(n => userCats.includes(n.category) || n.category === 'global')
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        newsCache.set(cacheKey, { data: filteredNews, timestamp: Date.now() });
+        newsFetchInFlight.delete(cacheKey);
+        return filteredNews;
+      })().catch(err => {
+        newsFetchInFlight.delete(cacheKey);
+        throw err;
+      });
+
+      newsFetchInFlight.set(cacheKey, fetchPromise);
+    }
+
+    const result = await newsFetchInFlight.get(cacheKey);
+    return NextResponse.json(result);
   } catch (err) {
     console.error('Live News Sync Error:', err);
-    // Dynamic fallback that actually provides value
-    return NextResponse.json([
-      {
-        id: 'fallback-1',
-        headline: "Global Markets Steady Amid Policy Shifts",
-        source: "AssetFlux Intel",
-        timestamp: new Date().toISOString(),
-        category: "global",
-        content: "Terminal is resyncing live feeds. Markets are currently showing moderate volatility as investors await upcoming economic data points."
-      },
-      {
-        id: 'fallback-2',
-        headline: "Crypto Sentiment Remains Neutral in Quiet Session",
-        source: "AssetFlux Intel",
-        timestamp: new Date().toISOString(),
-        category: "crypto",
-        content: "On-chain data indicates steady accumulation despite a lack of major price catalysts in the last hour."
-      }
-    ]);
+    // Return stale cache if available
+    const { searchParams } = new URL(request.url);
+    const catsParam = searchParams.get('categories');
+    const userCats = catsParam ? catsParam.split(',') : ['global'];
+    const cacheKey = [...userCats].sort().join(',');
+    const stale = newsCache.get(cacheKey);
+    if (stale) return NextResponse.json(stale.data);
+
+    return NextResponse.json(FALLBACK_NEWS);
   }
 }
-

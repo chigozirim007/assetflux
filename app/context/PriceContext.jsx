@@ -152,7 +152,7 @@ export function PriceProvider({ children, initialPrices }) {
     };
   }, [connectWS, fetchCryptoREST]);
 
-  /* ── Poll Yahoo Finance for all stocks every 5 seconds ── */
+  /* ── Poll Yahoo Finance for all stocks every 15 seconds (stocks move slower than crypto) ── */
   const pollStocks = useCallback(async () => {
     try {
       const res = await fetch('/api/prices');
@@ -166,7 +166,7 @@ export function PriceProvider({ children, initialPrices }) {
 
   useEffect(() => {
     pollStocks();
-    const id = setInterval(pollStocks, 5000);
+    const id = setInterval(pollStocks, 15000);
     return () => clearInterval(id);
   }, [pollStocks]);
 

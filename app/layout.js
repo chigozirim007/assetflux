@@ -15,7 +15,7 @@ async function fetchInitialPrices() {
     const symbols = CRYPTO.map(c => `"${c.symbol}"`).join(',');
     const res = await fetch(
       `https://data-api.binance.vision/api/v3/ticker/24hr?symbols=[${encodeURIComponent(symbols)}]`,
-      { cache: 'no-store' }
+      { next: { revalidate: 5 } }
     );
     if (!res.ok) return {};
     const data = await res.json();

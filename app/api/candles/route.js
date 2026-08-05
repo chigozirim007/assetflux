@@ -8,7 +8,7 @@ const YAHOO_HEADERS = {
 async function getBinanceCandles(symbol, interval) {
   const LIMIT = { '1m': 500, '5m': 500, '15m': 400, '1h': 300, '4h': 200, '1d': 365 };
   const limit = LIMIT[interval] ?? 300;
-  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=${limit}`;
+  const url = `https://data-api.binance.vision/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=${limit}`;
   const res  = await fetch(url, { cache: 'no-store' });
   const data = await res.json();
 
@@ -63,6 +63,12 @@ async function getYahooCandles(symbol, interval, range) {
   return { candles, volumes };
 }
 
+/* ── In-memory cache: candle data is cached per symbol+interval+range
+      for 10 seconds to prevent burst flooding on chart navigation ── */
+const candleCache = new Map(); // key: "symbol:interval:range", value: { data, timestamp }
+const CANDLE_CACHE_TTL_MS = 10000; // 10 seconds
+const candleFetchInFlight = new Map(); // dedup concurrent requests
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const symbol   = searchParams.get('symbol');
@@ -72,14 +78,40 @@ export async function GET(request) {
 
   if (!symbol) return Response.json({ error: 'Missing symbol' }, { status: 400 });
 
+  const cacheKey = `${symbol}:${type}:${interval}:${range}`;
+
   try {
-    const data = type === 'crypto'
-      ? await getBinanceCandles(symbol, interval)
-      : await getYahooCandles(symbol, interval, range);
+    // Serve from cache if fresh
+    const cached = candleCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CANDLE_CACHE_TTL_MS) {
+      return Response.json(cached.data);
+    }
+
+    // Dedup: if a fetch for this key is already in flight, wait for it
+    if (!candleFetchInFlight.has(cacheKey)) {
+      const fetchPromise = (async () => {
+        const data = type === 'crypto'
+          ? await getBinanceCandles(symbol, interval)
+          : await getYahooCandles(symbol, interval, range);
+
+        candleCache.set(cacheKey, { data, timestamp: Date.now() });
+        candleFetchInFlight.delete(cacheKey);
+        return data;
+      })().catch(err => {
+        candleFetchInFlight.delete(cacheKey);
+        throw err;
+      });
+
+      candleFetchInFlight.set(cacheKey, fetchPromise);
+    }
+
+    const data = await candleFetchInFlight.get(cacheKey);
     return Response.json(data);
   } catch (err) {
     console.error('[/api/candles]', symbol, err.message);
+    // Return stale cache if available
+    const stale = candleCache.get(cacheKey);
+    if (stale) return Response.json(stale.data);
     return Response.json({ error: err.message, candles: [], volumes: [] }, { status: 500 });
   }
 }
-
