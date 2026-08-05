@@ -45,8 +45,8 @@ export default function TradingViewChart({
         hide_top_toolbar:    false,      // show timeframe toolbar
         hide_legend:         false,
         hide_side_toolbar:   false,      // show drawing tools
-        allow_symbol_change: false,
-        save_image:          false,
+        allow_symbol_change: true,
+        save_image:          true,
         withdateranges:      true,
         details:             false,
         hotlist:             false,
@@ -54,28 +54,6 @@ export default function TradingViewChart({
         backgroundColor:     '#0d0f1e',
         gridColor:           'rgba(30,27,75,0.12)',
         container_id:        containerId,
-        overrides: {
-          // Background
-          'paneProperties.background':               '#0d0f1e',
-          'paneProperties.backgroundType':           'solid',
-          // Grid
-          'paneProperties.vertGridProperties.color': 'rgba(30,27,75,0.15)',
-          'paneProperties.horzGridProperties.color': 'rgba(30,27,75,0.15)',
-          // Scale text
-          'scalesProperties.textColor':              '#71717a',
-          'scalesProperties.fontSize':               11,
-          // Candles - green up, red down
-          'mainSeriesProperties.candleStyle.upColor':          '#10b981',
-          'mainSeriesProperties.candleStyle.downColor':        '#ef4444',
-          'mainSeriesProperties.candleStyle.borderUpColor':    '#10b981',
-          'mainSeriesProperties.candleStyle.borderDownColor':  '#ef4444',
-          'mainSeriesProperties.candleStyle.wickUpColor':      '#10b981',
-          'mainSeriesProperties.candleStyle.wickDownColor':    '#ef4444',
-          // Price line
-          'mainSeriesProperties.priceLineColor':     '#7c3aed',
-          'mainSeriesProperties.priceLineWidth':     1,
-        },
-        studies_overrides: {},
       });
     };
 
