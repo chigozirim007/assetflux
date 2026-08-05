@@ -32,7 +32,26 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
   const [mounted, setMounted] = useState(false);
   const [localExpanded, setLocalExpanded] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined' && sessionStorage.getItem('assetflux_focus') === symbol) {
+      setLocalExpanded(true);
+    }
+  }, [symbol]);
+
+  const handleExpand = () => {
+    if (onExpand) {
+      onExpand(instrument);
+    } else {
+      if (typeof window !== 'undefined') sessionStorage.setItem('assetflux_focus', symbol);
+      setLocalExpanded(true);
+    }
+  };
+
+  const handleExitFocus = () => {
+    if (typeof window !== 'undefined') sessionStorage.removeItem('assetflux_focus');
+    setLocalExpanded(false);
+  };
 
   /* â”€â”€ Sync with global PriceContext â”€â”€ */
   const { prices, wsStatus } = usePrices();
@@ -74,7 +93,7 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
             <div className="flex items-center gap-2">
               <h3 className="text-xs sm:text-sm font-bold text-white truncate">{name}</h3>
               <button 
-                onClick={() => onExpand ? onExpand(instrument) : setLocalExpanded(true)}
+                onClick={handleExpand}
                 className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-white transition-all transform hover:scale-110"
                 title="Expand Chart"
               >
@@ -130,7 +149,7 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
               <p className="text-xs font-mono text-zinc-500">{displaySymbol || symbol}</p>
             </div>
             <button
-              onClick={() => setLocalExpanded(false)}
+              onClick={handleExitFocus}
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-zinc-200 hover:bg-white/10"
             >
               Exit Focus

@@ -131,7 +131,24 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (typeof window !== 'undefined' && sessionStorage.getItem('assetflux_focus_line') === symbol) {
+      setLocalExpanded(true);
+    }
+  }, [symbol]);
+
+  const handleExpand = () => {
+    if (onExpand) {
+      onExpand(instrument);
+    } else {
+      if (typeof window !== 'undefined') sessionStorage.setItem('assetflux_focus_line', symbol);
+      setLocalExpanded(true);
+    }
+  };
+
+  const handleExitFocus = () => {
+    if (typeof window !== 'undefined') sessionStorage.removeItem('assetflux_focus_line');
+    setLocalExpanded(false);
+  };
 
   const tf = TIMEFRAMES[tfIdx];
 
@@ -213,11 +230,11 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
                 {mounted ? fmtPrice(displayPrice) : '-'}
               </h3>
               <button 
-                onClick={() => onExpand ? onExpand(instrument) : setLocalExpanded(true)}
-                className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-white transition-all transform hover:scale-110"
+                onClick={handleExpand}
+                className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-white transition-all transform hover:scale-110"
                 title="Expand Chart"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
               </button>
             </div>
             <div className="flex items-center gap-1.5">
@@ -267,7 +284,7 @@ export default function LineChartCard({ instrument, onExpand, isExpanded = false
               <p className="text-xs font-mono text-zinc-500">{displaySymbol || symbol}</p>
             </div>
             <button
-              onClick={() => setLocalExpanded(false)}
+              onClick={handleExitFocus}
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-zinc-200 hover:bg-white/10"
             >
               Exit Focus
