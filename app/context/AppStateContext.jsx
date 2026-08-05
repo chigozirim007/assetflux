@@ -12,44 +12,7 @@ const DEFAULT_NOTIFICATIONS = {
   webPush: false,
 };
 
-const DEFAULT_POSTS = [
-  {
-    id: 'sample-1',
-    category: 'crypto',
-    content: 'Bullish on BTC above 63k. Retracement likely first before testing 68k resistance. #BTC #Crypto',
-    author: { id: 'dan-1', name: 'CryptoDan', username: 'cryptodan' },
-    likes: ['user-1', 'user-2'],
-    comments: [],
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-  },
-  {
-    id: 'sample-2',
-    category: 'crypto',
-    content: 'Ethereum holding strong support at $3,400. DeFi activity surging across Layer 2s. #ETH #DeFi',
-    author: { id: 'alex-2', name: 'Alex Trader', username: 'alextrader' },
-    likes: ['user-1'],
-    comments: [],
-    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-  },
-  {
-    id: 'sample-3',
-    category: 'stocks',
-    content: 'NVDA earnings expectations are high. Watching semiconductor momentum closely. #Stocks #Tech',
-    author: { id: 'sarah-3', name: 'Sarah Markets', username: 'sarah_mkt' },
-    likes: ['user-3'],
-    comments: [],
-    createdAt: new Date(Date.now() - 1000 * 60 * 320).toISOString(),
-  },
-  {
-    id: 'sample-4',
-    category: 'forex',
-    content: 'EUR/USD consolidating near 1.0850 ahead of upcoming ECB rate commentary. #Forex #EURUSD',
-    author: { id: 'fx-mentor', name: 'FX Mentor', username: 'fxmentor' },
-    likes: [],
-    comments: [],
-    createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
-  },
-];
+const DEFAULT_POSTS = [];
 
 const AppStateContext = createContext(null);
 
