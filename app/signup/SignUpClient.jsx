@@ -240,6 +240,29 @@ export default function SignUpClient() {
       return;
     }
 
+    // Now that the OTP is verified, the session is active. 
+    // We can safely bypass RLS to sync the email and verified status to the profile.
+    if (data.user?.id) {
+      console.log("OTP Verified! Updating profile for user:", data.user.id);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          email: form.email, 
+          interests: selectedCats, 
+          two_fa_enabled: form.twoFA,
+          verified: true 
+        })
+        .eq('id', data.user.id);
+        
+      if (updateError) {
+        console.error("Failed to update profile after OTP verification:", updateError);
+      } else {
+        console.log("Profile updated successfully with email:", form.email);
+      }
+    } else {
+      console.error("OTP verification succeeded but no user ID returned?", data);
+    }
+
     setVerifying(false);
     // On success, the session is created and the `onAuthStateChange` listener in AppStateContext 
     // will detect it and redirect the user via the `useEffect` above.
