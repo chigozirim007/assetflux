@@ -5,7 +5,7 @@ import { STOCKS, CRYPTO, FOREX, SHARES, REAL_ESTATE } from '../constants/instrum
 
 /* â”€â”€ Dynamically build Binance streams for Crypto â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CRYPTO_STREAMS = CRYPTO.map(c => `${c.symbol.toLowerCase()}@ticker`).join('/');
-const WS_URL = `wss://stream.binance.com:9443/stream?streams=${CRYPTO_STREAMS}`;
+const WS_URL = `wss://data-stream.binance.vision/stream?streams=${CRYPTO_STREAMS}`;
 
 const STREAM_KEY_MAP = {};
 CRYPTO.forEach(c => {
@@ -123,7 +123,7 @@ export function PriceProvider({ children, initialPrices }) {
   const fetchCryptoREST = useCallback(async () => {
     try {
       const symbols = CRYPTO.map(c => `"${c.symbol}"`).join(',');
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=[${encodeURIComponent(symbols)}]`);
+      const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/24hr?symbols=[${encodeURIComponent(symbols)}]`);
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data)) {
