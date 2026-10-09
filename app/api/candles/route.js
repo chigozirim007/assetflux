@@ -50,7 +50,7 @@ async function getYahooCandles(symbol, interval, range) {
       low:   quote.low[i],
       close: quote.close[i],
     }))
-    .filter(c => c.open != null && c.close != null && c.high != null && c.low != null);
+    .filter(c => c.open !== null && c.close !== null && c.high !== null && c.low !== null);
 
   const volumes = ts
     .map((t, i) => ({
@@ -58,7 +58,7 @@ async function getYahooCandles(symbol, interval, range) {
       value: quote.volume?.[i] ?? 0,
       color: (quote.close[i] ?? 0) >= (quote.open[i] ?? 0) ? '#10b98122' : '#ef444422',
     }))
-    .filter((_, i) => quote.open[i] != null);
+    .filter((_, i) => quote.open[i] !== null);
 
   return { candles, volumes };
 }

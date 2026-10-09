@@ -37,7 +37,7 @@ const MARKET_CARDS = [
 
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmtPrice(price, key) {
-  if (price == null) return '...';
+  if (price === null || price === undefined) return '...';
   if (key === 'BTC/USDT')
     return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (key === 'EUR/USDT') return price.toFixed(4);
@@ -45,7 +45,7 @@ function fmtPrice(price, key) {
 }
 
 function fmtChange(change) {
-  if (change == null) return '-';
+  if (change === null || change === undefined) return '-';
   return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
 }
 

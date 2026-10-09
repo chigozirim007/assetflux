@@ -197,10 +197,20 @@ export function AppStateProvider({ children }) {
       // Check token expiry from the JWT 'exp' claim
       const expiresAt = session.expires_at; // Unix timestamp in seconds
       if (expiresAt && Date.now() / 1000 > expiresAt) return true;
-      // Also enforce our own max session age from user creation/last sign-in
-      const issuedAt = session.token?.iat || (session.user?.last_sign_in_at
-        ? new Date(session.user.last_sign_in_at).getTime() / 1000
-        : null);
+
+      // Also enforce our own max session age.
+      // Supabase sessions don't have a .token object — the JWT is a raw string
+      // at session.access_token. Decode the middle segment to get 'iat'.
+      let issuedAt = null;
+      if (session.access_token) {
+        try {
+          const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+          issuedAt = payload.iat || null;
+        } catch { /* malformed JWT — fall through to last_sign_in_at */ }
+      }
+      if (!issuedAt && session.user?.last_sign_in_at) {
+        issuedAt = new Date(session.user.last_sign_in_at).getTime() / 1000;
+      }
       if (issuedAt && (Date.now() / 1000 - issuedAt) > SESSION_EXPIRY_SECONDS) return true;
       return false;
     }

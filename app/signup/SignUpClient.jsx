@@ -187,8 +187,7 @@ export default function SignUpClient() {
           lastName: form.lastName,
           username: form.username,
           email: form.email,
-          phone: form.phone,
-          twoFA: form.twoFA,
+          phone: `${form.countryCode}${form.phone.replace(/\s+/g, '')}`,
           interests: selectedCats,
         }
       }
@@ -203,7 +202,7 @@ export default function SignUpClient() {
     if (data.user?.id) {
       await supabase
         .from('profiles')
-        .update({ email: form.email, interests: selectedCats, two_fa_enabled: form.twoFA })
+        .update({ email: form.email, interests: selectedCats })
         .eq('id', data.user.id);
     }
 
@@ -248,7 +247,6 @@ export default function SignUpClient() {
         .update({
           email: form.email,
           interests: verifiedCats,
-          two_fa_enabled: form.twoFA,
           verified: true,
         })
         .eq('id', data.user.id);

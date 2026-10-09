@@ -43,7 +43,7 @@ function parseRss(xml) {
     const linkMatch = content.match(/<link>(.*?)<\/link>/);
 
     if (titleMatch && dateMatch) {
-      let fullTitle = titleMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+      const fullTitle = titleMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"');
       const parts = fullTitle.split(' - ');
       const source = parts.pop();
       const headline = parts.join(' - ') || fullTitle;
@@ -63,7 +63,6 @@ function parseRss(xml) {
         timestamp: new Date(dateMatch[1]).toISOString(),
         category,
         url: linkMatch ? linkMatch[1] : '#',
-        content: `BREAKING [${category.toUpperCase()}]: ${headline}. This development is being closely monitored by professional traders. Institutional flow indicates heightened interest in ${category} assets following this report from ${source}. Analysts expect immediate volatility impact as the market digests these implications.`
       });
     }
   }
@@ -80,18 +79,18 @@ const FALLBACK_NEWS = [
   {
     id: 'fallback-1',
     headline: "Global Markets Steady Amid Policy Shifts",
-    source: "AssetFlux Intel",
+    source: "AssetFlux System",
     timestamp: new Date().toISOString(),
     category: "global",
-    content: "Terminal is resyncing live feeds. Markets are currently showing moderate volatility as investors await upcoming economic data points."
+    url: '#',
   },
   {
     id: 'fallback-2',
-    headline: "Crypto Sentiment Remains Neutral in Quiet Session",
-    source: "AssetFlux Intel",
+    headline: "Live feed is reconnecting — headlines will appear shortly",
+    source: "AssetFlux System",
     timestamp: new Date().toISOString(),
-    category: "crypto",
-    content: "On-chain data indicates steady accumulation despite a lack of major price catalysts in the last hour."
+    category: "global",
+    url: '#',
   }
 ];
 
