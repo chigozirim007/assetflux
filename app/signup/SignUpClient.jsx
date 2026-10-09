@@ -6,10 +6,10 @@ import { useAppState } from '../context/AppStateContext';
 
 const CATEGORIES = [
   { id: 'crypto',      label: 'Crypto',      icon: 'BTC', color: '#f59e0b', desc: 'BTC, ETH & more' },
-  { id: 'forex',       label: 'Forex',        icon: 'â‚¬', color: '#34d399', desc: 'Major currency pairs' },
+  { id: 'forex',       label: 'Forex',        icon: 'Ã¢â€šÂ¬', color: '#34d399', desc: 'Major currency pairs' },
   { id: 'stocks',      label: 'Stocks',       icon: '', color: '#818cf8', desc: 'US & global equities' },
-  { id: 'shares',      label: 'Shares',       icon: 'ðŸ¢', color: '#60a5fa', desc: 'Fractional shares' },
-  { id: 'real-estate', label: 'Real Estate',  icon: 'ðŸ ', color: '#fb923c', desc: 'REITs & property' },
+  { id: 'shares',      label: 'Shares',       icon: 'Ã°Å¸ÂÂ¢', color: '#60a5fa', desc: 'Fractional shares' },
+  { id: 'real-estate', label: 'Real Estate',  icon: 'Ã°Å¸ÂÂ ', color: '#fb923c', desc: 'REITs & property' },
 ];
 
 const NOTIF = [
@@ -148,7 +148,6 @@ export default function SignUpClient() {
       if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
     }
     if (step === 2) {
-      if (!form.twoFA) e.twoFA = 'Two-factor authentication is required';
       if (!form.agreeTerms)   e.agreeTerms   = 'You must accept the Terms';
       if (!form.agreePrivacy) e.agreePrivacy = 'You must accept the Privacy Policy';
     }
@@ -240,27 +239,19 @@ export default function SignUpClient() {
       return;
     }
 
-    // Now that the OTP is verified, the session is active. 
-    // We can safely bypass RLS to sync the email and verified status to the profile.
+    // Now that the OTP is verified, the session is active.
+    // Derive selected categories from cats state (same source as submit()).
     if (data.user?.id) {
-      console.log("OTP Verified! Updating profile for user:", data.user.id);
-      const { error: updateError } = await supabase
+      const verifiedCats = Object.keys(cats).filter(id => cats[id]);
+      await supabase
         .from('profiles')
-        .update({ 
-          email: form.email, 
-          interests: selectedCats, 
+        .update({
+          email: form.email,
+          interests: verifiedCats,
           two_fa_enabled: form.twoFA,
-          verified: true 
+          verified: true,
         })
         .eq('id', data.user.id);
-        
-      if (updateError) {
-        console.error("Failed to update profile after OTP verification:", updateError);
-      } else {
-        console.log("Profile updated successfully with email:", form.email);
-      }
-    } else {
-      console.error("OTP verification succeeded but no user ID returned?", data);
     }
 
     setVerifying(false);
@@ -348,7 +339,7 @@ export default function SignUpClient() {
         {/* Card */}
         <div className="bg-[#0d0f2a]/70 backdrop-blur-xl border border-violet-900/30 rounded-2xl p-6 sm:p-8 shadow-[0_0_40px_rgba(109,40,217,0.08)]">
 
-          {/* â”€â”€ STEP 0: Personal Details â”€â”€ */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ STEP 0: Personal Details Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {step === 0 && (
             <div className="space-y-4">
               <div className="mb-6">
@@ -417,7 +408,7 @@ export default function SignUpClient() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 1: Interests â”€â”€ */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ STEP 1: Interests Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {step === 1 && (
             <div>
               <div className="mb-6">
@@ -469,7 +460,7 @@ export default function SignUpClient() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 2: Security â”€â”€ */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ STEP 2: Security Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {step === 2 && (
             <div className="space-y-5">
               <div className="mb-6">
@@ -477,18 +468,17 @@ export default function SignUpClient() {
                 <p className="text-zinc-500 text-sm mt-1">Secure your account and finish up</p>
               </div>
 
-              {/* 2FA toggle */}
-              <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-800 bg-zinc-900/30">
+              {/* 2FA notice -- real TOTP coming in a future update */}
+              <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 opacity-60">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-violet-900/30 border border-violet-700/30 flex items-center justify-center text-lg"></div>
+                  <div className="w-10 h-10 rounded-xl bg-violet-900/30 border border-violet-700/30 flex items-center justify-center text-lg">&#x1f512;</div>
                   <div>
-                    <p className="text-sm font-bold text-white">Two-Factor Authentication</p>
-                    <p className="text-[10px] text-zinc-500">Required before creating an AssetFlux account</p>
+                    <p className="text-sm font-bold text-white">Two-Factor Authentication <span className="text-[10px] text-amber-400 ml-1 font-normal">Coming Soon</span></p>
+                    <p className="text-[10px] text-zinc-500">TOTP-based 2FA will be available in a future update</p>
                   </div>
                 </div>
-                <Toggle on={form.twoFA} onChange={() => set('twoFA', !form.twoFA)} />
+                <div className="text-xs text-zinc-600 font-medium px-2 py-1 rounded bg-zinc-800/50">Soon</div>
               </div>
-              {errors.twoFA && <p className="text-red-400 text-xs pl-1">{errors.twoFA}</p>}
 
               {/* Referral code */}
               <InputField id="referral" label="Referral Code (optional)" value={form.referral}
@@ -521,7 +511,7 @@ export default function SignUpClient() {
               <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-500 space-y-1">
                 <p> Interests: <span className="text-zinc-300">{Object.keys(cats).filter(k => cats[k]).map(k => CATEGORIES.find(c => c.id===k)?.label).join(', ') || 'None selected'}</span></p>
                 <p> Notifications: <span className="text-zinc-300">{Object.keys(notifs).filter(k => notifs[k]).map(k => NOTIF.find(n => n.id===k)?.label).join(', ') || 'None'}</span></p>
-                <p> 2FA: <span className={form.twoFA ? 'text-emerald-400' : 'text-zinc-500'}>{form.twoFA ? 'Enabled' : 'Disabled'}</span></p>
+                <p> 2FA: <span className="text-amber-400">Coming Soon</span></p>
               </div>
 
               {errors.global && (

@@ -29,7 +29,6 @@ export const STOCKS = [
   { symbol: 'MS',    name: 'Morgan Stanley',          displaySymbol: 'MS.US',    color: '#002554', badge: 'STOCK' },
   { symbol: 'IBM',   name: 'IBM Corp.',               displaySymbol: 'IBM.US',   color: '#0530ad', badge: 'STOCK' },
   { symbol: 'CSCO',  name: 'Cisco Systems',           displaySymbol: 'CSCO.US',  color: '#049fd9', badge: 'STOCK' },
-  { symbol: 'ORCL',  name: 'Oracle Corp.',            displaySymbol: 'ORCL.US',  color: '#f00000', badge: 'STOCK' },
   { symbol: 'UBER',  name: 'Uber Technologies',       displaySymbol: 'UBER.US',  color: '#000000', badge: 'STOCK' },
   { symbol: 'ABNB',  name: 'Airbnb Inc.',             displaySymbol: 'ABNB.US',  color: '#ff5a5f', badge: 'STOCK' },
   { symbol: 'SHOP',  name: 'Shopify Inc.',            displaySymbol: 'SHOP.US',  color: '#95bf47', badge: 'STOCK' },
@@ -207,7 +206,6 @@ export const SHARES = [
   { symbol: 'SMH',  name: 'VanEck Semiconductor ETF',    displaySymbol: 'SMH',  color: '#6366f1', badge: 'ETF' },
   { symbol: 'KRE',  name: 'SPDR S&P Regional Banking',   displaySymbol: 'KRE',  color: '#f97316', badge: 'ETF' },
   { symbol: 'KBE',  name: 'SPDR S&P Bank ETF',           displaySymbol: 'KBE',  color: '#06b6d4', badge: 'ETF' },
-  { symbol: 'TLT',  name: 'iShares 20+ Year Treasury',   displaySymbol: 'TLT',  color: '#ec4899', badge: 'ETF' },
 ];
 
 export const REAL_ESTATE = [
@@ -255,7 +253,6 @@ export const REAL_ESTATE = [
   { symbol: 'ELS',  name: 'Equity LifeStyle Prop',        displaySymbol: 'ELS',   color: '#10b981', badge: 'REIT' },
   { symbol: 'IRM',  name: 'Iron Mountain Inc.',           displaySymbol: 'IRM',   color: '#6366f1', badge: 'REIT' },
   { symbol: 'UNIT', name: 'Uniti Group Inc.',             displaySymbol: 'UNIT',  color: '#f97316', badge: 'REIT' },
-  { symbol: 'VICI', name: 'VICI Properties',              displaySymbol: 'VICI',  color: '#06b6d4', badge: 'REIT' },
   { symbol: 'LAMR', name: 'Lamar Advertising',            displaySymbol: 'LAMR',  color: '#ec4899', badge: 'REIT' },
   { symbol: 'OUT',  name: 'OUTFRONT Media Inc.',          displaySymbol: 'OUT',   color: '#8b5cf6', badge: 'REIT' },
   { symbol: 'GLPI', name: 'Gaming and Leisure Prop',      displaySymbol: 'GLPI',  color: '#22c55e', badge: 'REIT' },

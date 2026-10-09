@@ -226,6 +226,24 @@ export function AppStateProvider({ children }) {
           return;
         }
 
+        // "Keep me signed in" enforcement:
+        // If the user did NOT check "Keep me signed in", we stored a sessionStorage
+        // flag ('assetflux_session_alive'). When the browser closes, sessionStorage
+        // is wiped. On the next load, if there's no 'remember' in localStorage AND
+        // no alive flag in sessionStorage, this is a new browser session → sign out.
+        if (currentSession) {
+          const remembered = localStorage.getItem('assetflux_remember') === 'true';
+          const tabAlive = sessionStorage.getItem('assetflux_session_alive') === 'true';
+          if (!remembered && !tabAlive) {
+            console.info('Ephemeral session — "Keep me signed in" was not checked. Signing out.');
+            await supabase.auth.signOut();
+            resetSignedInState();
+            setSession(null);
+            setAuthLoading(false);
+            return;
+          }
+        }
+
         setSession(currentSession);
         const authUser = currentSession?.user || null;
         applyAuthUser(authUser);

@@ -51,24 +51,22 @@ async function resolveLoginEmail(identifier) {
   const username = login.replace(/^@+/, '');
   if (!username) throw new Error('Enter your email or username.');
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('email, username, first_name, last_name')
-    .ilike('username', username)
-    .limit(1)
-    .maybeSingle();
+  // Call the server-side route — the anon key is never used for this lookup.
+  const res = await fetch('/api/resolve-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+  });
 
-  if (error) {
-    throw new Error(
-      error.message?.includes('email')
-        ? 'Username login needs the email field on profiles. Please run the latest Supabase schema migration.'
-        : error.message
-    );
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.error || 'No account found for that username.');
   }
 
-  if (!data?.email) throw new Error('No account was found for that username.');
-  return { email: data.email, profile: data };
+  return { email: json.email, profile: json.profile };
 }
+
 
 /* ―― Animated grid background ―――――――――――――――――――――――――――――――――――――――― */
 
@@ -224,7 +222,20 @@ export default function SignInClient() {
 
     localStorage.setItem('assetflux_user', JSON.stringify({ username, name, email: resolved.email }));
     localStorage.setItem('isNewUser', 'false');
-    
+
+    // "Keep me signed in" — when unchecked, mark the session as ephemeral.
+    // On the next page load, AppStateContext will check this flag and
+    // clear the session when the browser/tab is closed.
+    if (remember) {
+      localStorage.setItem('assetflux_remember', 'true');
+    } else {
+      localStorage.removeItem('assetflux_remember');
+      // Store a sessionStorage flag so we know this tab is still alive.
+      // When the browser closes, sessionStorage is wiped, and the next
+      // load will see no flag → sign out automatically.
+      sessionStorage.setItem('assetflux_session_alive', 'true');
+    }
+
     // Redirect to dashboard
     window.location.href = nextPath;
   };

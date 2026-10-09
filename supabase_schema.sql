@@ -34,6 +34,11 @@ where p.id = u.id
 
 -- Turn on Row Level Security
 alter table public.profiles enable row level security;
+drop policy if exists "Public profiles are viewable by everyone." on profiles;
+drop policy if exists "Users can insert their own profile." on profiles;
+drop policy if exists "Users can update own profile." on profiles;
+drop policy if exists "Admins can update any profile." on profiles;
+
 create policy "Public profiles are viewable by everyone." on profiles for select using (true);
 create policy "Users can insert their own profile." on profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile." on profiles for update using (auth.uid() = id);
@@ -168,18 +173,153 @@ create table public.subscriptions (
 );
 
 -- 10. NOTIFICATIONS LOG
-create table public.notifications_log (
+create table if not exists public.notifications_log (
   id uuid default uuid_generate_v4() primary key,
-  user_id uuid references public.profiles(id) not null,
+  user_id uuid references public.profiles(id),
   type text not null,
   message text not null,
   read boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Basic Read Policies (Ensure table data is viewable by default APIs)
-alter table public.posts enable row level security;
-create policy "Posts are viewable by everyone" on public.posts for select using (true);
+alter table public.notifications_log add column if not exists user_id uuid references public.profiles(id);
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- ROW LEVEL SECURITY — ALL TABLES
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- POSTS
+alter table public.posts enable row level security;
+drop policy if exists "Posts are viewable by everyone" on public.posts;
+drop policy if exists "Users can insert their own posts" on public.posts;
+drop policy if exists "Users can update their own posts" on public.posts;
+drop policy if exists "Users can delete their own posts" on public.posts;
+
+create policy "Posts are viewable by everyone"
+  on public.posts for select using (true);
+create policy "Users can insert their own posts"
+  on public.posts for insert with check (auth.uid() = user_id);
+create policy "Users can update their own posts"
+  on public.posts for update using (auth.uid() = user_id);
+create policy "Users can delete their own posts"
+  on public.posts for delete using (auth.uid() = user_id);
+
+-- COMMENTS
+alter table public.comments enable row level security;
+drop policy if exists "Comments are viewable by everyone" on public.comments;
+drop policy if exists "Users can insert their own comments" on public.comments;
+drop policy if exists "Users can update their own comments" on public.comments;
+drop policy if exists "Users can delete their own comments" on public.comments;
+
+create policy "Comments are viewable by everyone"
+  on public.comments for select using (true);
+create policy "Users can insert their own comments"
+  on public.comments for insert with check (auth.uid() = user_id);
+create policy "Users can update their own comments"
+  on public.comments for update using (auth.uid() = user_id);
+create policy "Users can delete their own comments"
+  on public.comments for delete using (auth.uid() = user_id);
+
+-- LIKES
+alter table public.likes enable row level security;
+drop policy if exists "Likes are viewable by everyone" on public.likes;
+drop policy if exists "Users can insert their own likes" on public.likes;
+drop policy if exists "Users can delete their own likes" on public.likes;
+
+create policy "Likes are viewable by everyone"
+  on public.likes for select using (true);
+create policy "Users can insert their own likes"
+  on public.likes for insert with check (auth.uid() = user_id);
+create policy "Users can delete their own likes"
+  on public.likes for delete using (auth.uid() = user_id);
+
+-- FOLLOWERS
+alter table public.followers enable row level security;
+drop policy if exists "Followers are viewable by everyone" on public.followers;
+drop policy if exists "Users can follow others (insert own follower_id)" on public.followers;
+drop policy if exists "Users can unfollow (delete own follower_id)" on public.followers;
+
+create policy "Followers are viewable by everyone"
+  on public.followers for select using (true);
+create policy "Users can follow others (insert own follower_id)"
+  on public.followers for insert with check (auth.uid() = follower_id);
+create policy "Users can unfollow (delete own follower_id)"
+  on public.followers for delete using (auth.uid() = follower_id);
+
+-- SQUADS
 alter table public.squads enable row level security;
-create policy "Squads are viewable by everyone" on public.squads for select using (true);
+drop policy if exists "Squads are viewable by everyone" on public.squads;
+drop policy if exists "Users can create squads" on public.squads;
+drop policy if exists "Squad creators can update their squads" on public.squads;
+drop policy if exists "Squad creators can delete their squads" on public.squads;
+
+create policy "Squads are viewable by everyone"
+  on public.squads for select using (true);
+create policy "Users can create squads"
+  on public.squads for insert with check (auth.uid() = created_by);
+create policy "Squad creators can update their squads"
+  on public.squads for update using (auth.uid() = created_by);
+create policy "Squad creators can delete their squads"
+  on public.squads for delete using (auth.uid() = created_by);
+
+-- SQUAD MEMBERS
+alter table public.squad_members enable row level security;
+drop policy if exists "Squad members are viewable by everyone" on public.squad_members;
+drop policy if exists "Users can join squads (insert own user_id)" on public.squad_members;
+drop policy if exists "Users can leave squads (delete own user_id)" on public.squad_members;
+
+create policy "Squad members are viewable by everyone"
+  on public.squad_members for select using (true);
+create policy "Users can join squads (insert own user_id)"
+  on public.squad_members for insert with check (auth.uid() = user_id);
+create policy "Users can leave squads (delete own user_id)"
+  on public.squad_members for delete using (auth.uid() = user_id);
+
+-- HOLDINGS
+alter table public.holdings enable row level security;
+drop policy if exists "Users can view their own holdings" on public.holdings;
+drop policy if exists "Users can insert their own holdings" on public.holdings;
+drop policy if exists "Users can update their own holdings" on public.holdings;
+drop policy if exists "Users can delete their own holdings" on public.holdings;
+
+create policy "Users can view their own holdings"
+  on public.holdings for select using (auth.uid() = user_id);
+create policy "Users can insert their own holdings"
+  on public.holdings for insert with check (auth.uid() = user_id);
+create policy "Users can update their own holdings"
+  on public.holdings for update using (auth.uid() = user_id);
+create policy "Users can delete their own holdings"
+  on public.holdings for delete using (auth.uid() = user_id);
+
+-- SUBSCRIPTIONS
+alter table public.subscriptions enable row level security;
+drop policy if exists "Users can view subscriptions they are part of" on public.subscriptions;
+drop policy if exists "Users can create their own subscriptions" on public.subscriptions;
+drop policy if exists "Users can update their own subscriptions" on public.subscriptions;
+drop policy if exists "Users can cancel their own subscriptions" on public.subscriptions;
+
+create policy "Users can view subscriptions they are part of"
+  on public.subscriptions for select
+  using (auth.uid() = subscriber_id or auth.uid() = creator_id);
+create policy "Users can create their own subscriptions"
+  on public.subscriptions for insert with check (auth.uid() = subscriber_id);
+create policy "Users can update their own subscriptions"
+  on public.subscriptions for update using (auth.uid() = subscriber_id);
+create policy "Users can cancel their own subscriptions"
+  on public.subscriptions for delete using (auth.uid() = subscriber_id);
+
+-- NOTIFICATIONS LOG
+alter table public.notifications_log enable row level security;
+drop policy if exists "Users can view their own notifications" on public.notifications_log;
+drop policy if exists "System can insert notifications (service role only)" on public.notifications_log;
+drop policy if exists "Users can mark their own notifications as read" on public.notifications_log;
+drop policy if exists "Users can delete their own notifications" on public.notifications_log;
+
+create policy "Users can view their own notifications"
+  on public.notifications_log for select using (auth.uid() = user_id);
+create policy "System can insert notifications (service role only)"
+  on public.notifications_log for insert with check (auth.uid() = user_id);
+create policy "Users can mark their own notifications as read"
+  on public.notifications_log for update using (auth.uid() = user_id);
+create policy "Users can delete their own notifications"
+  on public.notifications_log for delete using (auth.uid() = user_id);
