@@ -1,12 +1,19 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 // Server-side only: uses the service-role key so the anon key
 // is never used for sensitive lookups from the browser.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Lazily initialised — at build time the env vars may not exist yet.
+let _supabaseAdmin;
+function getSupabaseAdmin() {
+  if (!_supabaseAdmin) {
+    _supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  }
+  return _supabaseAdmin;
+}
 
 export async function POST(request) {
   try {
@@ -22,7 +29,7 @@ export async function POST(request) {
     const clean = username.trim().replace(/^@+/, "");
 
     // Only return enough to identify the account — never expose email in the response.
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from("profiles")
       .select("id, username, first_name, last_name, email")
       .ilike("username", clean)
