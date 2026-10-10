@@ -42,8 +42,17 @@ drop policy if exists "Admins can update any profile." on profiles;
 create policy "Public profiles are viewable by everyone." on profiles for select using (true);
 create policy "Users can insert their own profile." on profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile." on profiles for update using (auth.uid() = id);
+
+-- Helper function to safely check admin status without recursion/TOCTOU
+create or replace function public.is_admin()
+returns boolean language sql security definer set search_path = public as $$
+  select exists (
+    select 1 from public.profiles where id = auth.uid() and role = 'admin'
+  );
+$$;
+
 create policy "Admins can update any profile." on profiles for update using (
-  exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  public.is_admin()
 );
 
 -- TRIGGER for auto-creating profile on signup

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePrices } from '../context/PriceContext';
 import TradingViewChart from './TradingViewChart';
 
@@ -28,7 +28,6 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
 
   const isCrypto = badge === 'CRYPTO';
   const isForex = badge === 'FOREX';
-  const priceRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [localExpanded, setLocalExpanded] = useState(false);
 
@@ -104,7 +103,7 @@ export default function TradingChartCard({ instrument, onExpand, isExpanded = fa
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <p ref={priceRef} className="price-num text-sm sm:text-base font-bold" style={{ color }}>
+          <p className="price-num text-sm sm:text-base font-bold" style={{ color }}>
             {fmtPrice(displayPrice, decimalPlaces)}
           </p>
           <p className={`font-bold text-[10px] sm:text-[11px] mt-0.5 ${displayUp ? 'text-emerald-400' : 'text-red-400'}`}>

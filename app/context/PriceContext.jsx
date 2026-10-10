@@ -12,15 +12,13 @@ CRYPTO.forEach(c => {
   STREAM_KEY_MAP[c.symbol.toLowerCase()] = c.displaySymbol;
 });
 
-const SEED = {};
-
-const LS_KEY = 'af_prices_v3';
+const LS_KEY = 'af_prices_v4';
 
 /** Read last-known prices from localStorage only if cached less than 60 seconds ago */
 function loadInitialPrices() {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = localStorage.getItem('af_prices_v4');
+    const raw = localStorage.getItem(LS_KEY);
     if (raw) {
       const { data, timestamp } = JSON.parse(raw);
       // Only return cache if it's less than 60 seconds old
@@ -77,7 +75,7 @@ export function PriceProvider({ children, initialPrices }) {
       setPrices(prev => {
         const next = { ...prev, ...batch };
         try {
-          localStorage.setItem('af_prices_v4', JSON.stringify({ data: next, timestamp: Date.now() }));
+          localStorage.setItem(LS_KEY, JSON.stringify({ data: next, timestamp: Date.now() }));
         } catch { /* ignore */ }
         return next;
       });

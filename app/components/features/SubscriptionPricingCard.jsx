@@ -8,7 +8,6 @@ export default function SubscriptionPricingCard() {
   const { user, refreshProfile } = useAppState();
   const [price, setPrice] = useState(25);
   const [saving, setSaving] = useState(false);
-  const [subscribing, setSubscribing] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
@@ -38,57 +37,10 @@ export default function SubscriptionPricingCard() {
         setStatusMessage({ type: 'success', text: 'Subscription tier saved successfully!' });
         await refreshProfile();
       }
-    } catch (err) {
+    } catch {
       setStatusMessage({ type: 'error', text: 'Error saving price.' });
     } finally {
       setSaving(false);
-    }
-  };
-
-  // Demo subscription action to generate live transaction data
-  const handleCreateTestSubscription = async () => {
-    if (!user?.id) return;
-    setSubscribing(true);
-    setStatusMessage(null);
-
-    try {
-      // Find a creator profile (or subscribe to self/demo creator)
-      const { data: creatorProfiles } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .limit(5);
-
-      const creator = creatorProfiles?.find(p => p.id !== user.id) || creatorProfiles?.[0];
-
-      if (!creator) {
-        setStatusMessage({ type: 'error', text: 'No creator profiles available to subscribe to.' });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .upsert(
-          {
-            subscriber_id: user.id,
-            creator_id: creator.id,
-            amount: price || 25,
-            status: 'active',
-          },
-          { onConflict: 'subscriber_id, creator_id' }
-        );
-
-      if (error) {
-        setStatusMessage({ type: 'error', text: `Subscription failed: ${error.message}` });
-      } else {
-        setStatusMessage({
-          type: 'success',
-          text: `Active subscription created for @${creator.username || 'creator'} ($${price}/mo)! Volume updated live in Admin.`,
-        });
-      }
-    } catch (err) {
-      setStatusMessage({ type: 'error', text: 'Error processing subscription.' });
-    } finally {
-      setSubscribing(false);
     }
   };
 
@@ -139,21 +91,13 @@ export default function SubscriptionPricingCard() {
         </p>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-2 pt-1">
+      <div className="pt-1">
         <button
           onClick={handleSavePrice}
           disabled={saving}
-          className="flex-1 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition disabled:opacity-50"
+          className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition disabled:opacity-50"
         >
           {saving ? 'Saving Tier...' : 'Save Creator Pricing'}
-        </button>
-
-        <button
-          onClick={handleCreateTestSubscription}
-          disabled={subscribing}
-          className="flex-1 border border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold text-xs py-2.5 px-4 rounded-xl transition disabled:opacity-50"
-        >
-          {subscribing ? 'Processing...' : 'Subscribe / Activate ($' + price + ')'}
         </button>
       </div>
     </div>
